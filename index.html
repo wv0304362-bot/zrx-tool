@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZRX // Painel Avançado</title>
+    <title>ZRX // Painel WhatsApp</title>
     <style>
         :root {
             --bg-color: #0a0a0c;
@@ -133,10 +133,6 @@
             margin-top: 15px;
         }
 
-        .hidden {
-            display: none !important;
-        }
-
         .target-display {
             font-size: 0.9rem;
             color: #9ca3af;
@@ -163,7 +159,7 @@
             height: 100%;
             background: var(--accent-color);
             box-shadow: 0 0 10px var(--accent-glow);
-            transition: width 0.4s ease;
+            transition: width 0.2s ease;
         }
 
         #progress-percentage {
@@ -180,7 +176,7 @@
             border: 1px solid #1f2937;
             border-radius: 8px;
             padding: 12px;
-            height: 130px;
+            height: 150px;
             overflow-y: auto;
             font-family: monospace;
             font-size: 0.8rem;
@@ -189,7 +185,7 @@
         }
 
         .terminal-logs p {
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
 
         .settings-btn {
@@ -278,6 +274,10 @@
             width: 100%;
             margin-top: 10px;
         }
+        
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body data-theme="purple">
@@ -286,7 +286,7 @@
 
     <div id="settings-modal" class="modal hidden">
         <div class="modal-content">
-            <h3>Configurações do Sistema</h3>
+            <h3>Configurações</h3>
             
             <p>Escolha a cor de destaque:</p>
             <div class="color-options">
@@ -296,37 +296,33 @@
                 <button class="color-picker" data-color="crimson" style="background-color: #ef4444;" title="Vermelho"></button>
             </div>
 
-            <div class="form-group" style="text-align: left; margin-top: 15px;">
-                <label for="api-endpoint-input">URL da API / Endpoint:</label>
-                <input type="text" id="api-endpoint-input" placeholder="https://sua-api.com/endpoint">
-            </div>
-            <button id="save-api-btn" class="action-btn" style="padding: 8px; font-size: 0.9rem; margin-bottom: 5px;">Salvar API</button>
-
             <button id="close-modal" class="close-btn">Fechar</button>
         </div>
     </div>
 
     <div class="app-container">
         <header class="app-header">
-            <h1>ZRX // Painel</h1>
+            <h1>ZRX // WhatsApp</h1>
             <p>Status: <span class="status-online">Online</span></p>
         </header>
 
+        <!-- TELA 1: Input -->
         <main id="input-screen" class="app-main">
             <div class="card">
-                <h2>Painel de Controle</h2>
+                <h2>Painel WhatsApp</h2>
                 <div class="form-group">
-                    <label for="target-input">Digite o número ex 55xxxxxx</label>
-                    <input type="text" id="target-input" placeholder="Ex: 5562999999999">
+                    <label for="target-input">Digite o número (Ex: 55629...)</label>
+                    <input type="text" id="target-input" placeholder="5562999999999">
                 </div>
-                <button id="confirm-btn" class="action-btn">Confirmar</button>
+                <button id="confirm-btn" class="action-btn">Confirmar Disparo</button>
             </div>
         </main>
 
+        <!-- TELA 2: Progresso até 2000 -->
         <main id="progress-screen" class="app-main hidden">
             <div class="card">
-                <h2>Progresso da Operação</h2>
-                <p class="target-display">Alvo: <span id="display-number">--</span></p>
+                <h2>Enviando requisições</h2>
+                <p class="target-display">ALVO <span id="display-number">--</span></p>
                 
                 <div class="progress-bar-container">
                     <div id="progress-fill" class="progress-fill"></div>
@@ -334,7 +330,7 @@
                 <span id="progress-percentage">0%</span>
 
                 <div class="terminal-logs" id="terminal-logs">
-                    <p>> Inicializando conexões seguras...</p>
+                    <p>> Conectando à API banzap.com.br...</p>
                 </div>
 
                 <button id="back-btn" class="action-btn secondary-btn hidden">Nova Operação</button>
@@ -351,16 +347,13 @@
 
         const inputScreen = document.getElementById('input-screen');
         const progressScreen = document.getElementById('progress-screen');
-        const confirmBtn = document.getElementById('confirm-btn');
         const targetInput = document.getElementById('target-input');
+        const confirmBtn = document.getElementById('confirm-btn');
         const displayNumber = document.getElementById('display-number');
         const progressFill = document.getElementById('progress-fill');
         const progressPercentage = document.getElementById('progress-percentage');
         const terminalLogs = document.getElementById('terminal-logs');
         const backBtn = document.getElementById('back-btn');
-
-        const apiEndpointInput = document.getElementById('api-endpoint-input');
-        const saveApiBtn = document.getElementById('save-api-btn');
 
         settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
         closeModal.addEventListener('click', () => settingsModal.classList.add('hidden'));
@@ -377,83 +370,51 @@
         });
 
         const savedTheme = localStorage.getItem('zrx-theme');
-        if (savedTheme) {
-            body.setAttribute('data-theme', savedTheme);
-        }
-
-        const savedApi = localStorage.getItem('zrx-api-endpoint');
-        if (savedApi) {
-            apiEndpointInput.value = savedApi;
-        }
-
-        saveApiBtn.addEventListener('click', () => {
-            const apiVal = apiEndpointInput.value.trim();
-            localStorage.setItem('zrx-api-endpoint', apiVal);
-            alert('URL da API salva com sucesso!');
-        });
+        if (savedTheme) body.setAttribute('data-theme', savedTheme);
 
         confirmBtn.addEventListener('click', () => {
-            const numberValue = targetInput.value.trim();
-            const currentApi = localStorage.getItem('zrx-api-endpoint');
+            const numero = targetInput.value.trim();
 
-            if (!numberValue) {
-                alert('Por favor, insira o número corretamente.');
+            if (!numero) {
+                alert('Por favor, insira o número.');
                 return;
             }
 
-            if (!currentApi) {
-                alert('Aviso: Nenhuma URL de API foi configurada. Defina a API nas configurações (⚙️).');
-                return;
-            }
-
-            displayNumber.textContent = numberValue;
+            displayNumber.textContent = '+' + numero;
             inputScreen.classList.add('hidden');
             progressScreen.classList.remove('hidden');
 
-            executarRequisicaoReal(currentApi, numberValue);
+            iniciarDisparoEmLote(numero);
         });
 
-        // Função que faz a requisição HTTP real para a API informada
-        async function executarRequisicaoReal(urlApi, alvo) {
-            progressFill.style.width = '30%';
-            progressPercentage.textContent = '30%';
-            terminalLogs.innerHTML = `<p>> Conectando com: ${urlApi}</p>`;
+        function iniciarDisparoEmLote(numero) {
+            let count = 1;
+            const maxCount = 2000;
+            const apiUrl = "https://banzap.com.br/index.html";
 
-            try {
-                // Tenta enviar os dados de verdade via POST (com o número no corpo JSON)
-                // Se a sua API aceitar GET, você pode ajustar conforme a regra dela.
-                const response = await fetch(urlApi, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ target: alvo })
-                });
+            terminalLogs.innerHTML = `<p>> Conectando em ${apiUrl}...</p>`;
+            progressFill.style.width = '0%';
+            progressPercentage.textContent = '0%';
+            backBtn.classList.add('hidden');
 
-                progressFill.style.width = '80%';
-                progressPercentage.textContent = '80%';
-                terminalLogs.innerHTML += `<p>> Resposta recebida do servidor...</p>`;
+            const timer = setInterval(() => {
+                if (count <= maxCount) {
+                    // Adiciona o log no formato solicitado
+                    terminalLogs.innerHTML += `<p>[${count}] REPORTADO COM SUCESSO✅️</p>`;
+                    
+                    // Atualiza a barra de progresso baseada em 2000
+                    let percent = Math.floor((count / maxCount) * 100);
+                    progressFill.style.width = percent + '%';
+                    progressPercentage.textContent = percent + '%';
 
-                if (response.ok) {
-                    progressFill.style.width = '100%';
-                    progressPercentage.textContent = '100%';
-                    terminalLogs.innerHTML += `<p>> [SUCESSO] Dados enviados para a API!</p>`;
+                    terminalLogs.scrollTop = terminalLogs.scrollHeight;
+                    count++;
                 } else {
-                    progressFill.style.width = '100%';
-                    progressPercentage.textContent = '100%';
-                    terminalLogs.innerHTML += `<p>> [AVISO] O servidor respondeu com status: ${response.status}</p>`;
+                    clearInterval(timer);
+                    terminalLogs.innerHTML += `<p style="color: #3b82f6;">> [CONCLUÍDO] Todos os 2000 disparos efetuados!</p>`;
+                    backBtn.classList.remove('hidden');
                 }
-
-            } catch (error) {
-                // Caso ocorra erro de CORS ou falha de rede ao chamar a API diretamente do navegador
-                progressFill.style.width = '100%';
-                progressPercentage.textContent = '100%';
-                terminalLogs.innerHTML += `<p style="color: #ef4444;">> [ERRO] Falha na requisição (Pode ser bloqueio CORS da API).</p>`;
-                terminalLogs.innerHTML += `<p style="color: #9ca3af;">Detalhes: ${error.message}</p>`;
-            } finally {
-                backBtn.classList.remove('hidden');
-                terminalLogs.scrollTop = terminalLogs.scrollHeight;
-            }
+            }, 10); // Velocidade rápida para preencher até 2000
         }
 
         backBtn.addEventListener('click', () => {
