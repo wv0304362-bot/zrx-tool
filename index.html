@@ -9,11 +9,10 @@
             --bg-color: #0a0a0c;
             --card-bg: #121216;
             --text-color: #f3f4f6;
-            --accent-color: #8b5cf6; /* Roxo padrão */
+            --accent-color: #8b5cf6;
             --accent-glow: rgba(139, 92, 246, 0.3);
         }
 
-        /* Temas Dinâmicos */
         body[data-theme="blue"] {
             --accent-color: #3b82f6;
             --accent-glow: rgba(59, 130, 246, 0.3);
@@ -81,7 +80,6 @@
             color: var(--text-color);
         }
 
-        /* Formulário e Inputs */
         .form-group {
             display: flex;
             flex-direction: column;
@@ -139,7 +137,6 @@
             display: none !important;
         }
 
-        /* Progresso e Terminal */
         .target-display {
             font-size: 0.9rem;
             color: #9ca3af;
@@ -195,7 +192,6 @@
             margin-bottom: 5px;
         }
 
-        /* Botão de Configurações e Modal */
         .settings-btn {
             position: fixed;
             top: 20px;
@@ -286,10 +282,8 @@
 </head>
 <body data-theme="purple">
 
-    <!-- Botão Flutuante de Configurações -->
     <button id="settings-btn" class="settings-btn" aria-label="Configurações">⚙️</button>
 
-    <!-- Modal de Configuração (Temas + Configuração de API) -->
     <div id="settings-modal" class="modal hidden">
         <div class="modal-content">
             <h3>Configurações do Sistema</h3>
@@ -303,8 +297,8 @@
             </div>
 
             <div class="form-group" style="text-align: left; margin-top: 15px;">
-                <label for="api-endpoint-input">Endpoint / Chave da API:</label>
-                <input type="text" id="api-endpoint-input" placeholder="https://banzap.com.br/index.html">
+                <label for="api-endpoint-input">URL da API / Endpoint:</label>
+                <input type="text" id="api-endpoint-input" placeholder="https://sua-api.com/endpoint">
             </div>
             <button id="save-api-btn" class="action-btn" style="padding: 8px; font-size: 0.9rem; margin-bottom: 5px;">Salvar API</button>
 
@@ -312,14 +306,12 @@
         </div>
     </div>
 
-    <!-- Container Principal do App -->
     <div class="app-container">
         <header class="app-header">
             <h1>ZRX // Painel</h1>
             <p>Status: <span class="status-online">Online</span></p>
         </header>
 
-        <!-- TELA 1: Entrada do Número -->
         <main id="input-screen" class="app-main">
             <div class="card">
                 <h2>Painel de Controle</h2>
@@ -331,7 +323,6 @@
             </div>
         </main>
 
-        <!-- TELA 2: Visualização de Progresso e Logs (Oculta inicialmente) -->
         <main id="progress-screen" class="app-main hidden">
             <div class="card">
                 <h2>Progresso da Operação</h2>
@@ -371,14 +362,12 @@
         const apiEndpointInput = document.getElementById('api-endpoint-input');
         const saveApiBtn = document.getElementById('save-api-btn');
 
-        // Gerenciamento do Modal de Configurações
         settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
         closeModal.addEventListener('click', () => settingsModal.classList.add('hidden'));
         window.addEventListener('click', (e) => {
             if (e.target === settingsModal) settingsModal.classList.add('hidden');
         });
 
-        // Troca e Salvamento de Cores de Tema
         colorPickers.forEach(picker => {
             picker.addEventListener('click', () => {
                 const theme = picker.getAttribute('data-color');
@@ -387,7 +376,6 @@
             });
         });
 
-        // Carregar configurações salvas anteriormente (Tema e API)
         const savedTheme = localStorage.getItem('zrx-theme');
         if (savedTheme) {
             body.setAttribute('data-theme', savedTheme);
@@ -398,14 +386,12 @@
             apiEndpointInput.value = savedApi;
         }
 
-        // Salvar chave/endpoint da API localmente
         saveApiBtn.addEventListener('click', () => {
             const apiVal = apiEndpointInput.value.trim();
             localStorage.setItem('zrx-api-endpoint', apiVal);
-            alert('Configuração de API salva com sucesso!');
+            alert('URL da API salva com sucesso!');
         });
 
-        // Ação de Confirmação e Transição de Tela
         confirmBtn.addEventListener('click', () => {
             const numberValue = targetInput.value.trim();
             const currentApi = localStorage.getItem('zrx-api-endpoint');
@@ -416,57 +402,60 @@
             }
 
             if (!currentApi) {
-                alert('Aviso: Nenhuma API foi configurada. Defina a API nas configurações (⚙️).');
+                alert('Aviso: Nenhuma URL de API foi configurada. Defina a API nas configurações (⚙️).');
+                return;
             }
 
             displayNumber.textContent = numberValue;
             inputScreen.classList.add('hidden');
             progressScreen.classList.remove('hidden');
 
-            runProgressSimulation(currentApi);
+            executarRequisicaoReal(currentApi, numberValue);
         });
 
-        // Simulação de Progresso e Logs em Tempo Real
-        function runProgressSimulation(apiEndpoint) {
-            let progress = 0;
-            progressFill.style.width = '0%';
-            progressPercentage.textContent = '0%';
-            terminalLogs.innerHTML = `<p>> Conectando ao endpoint configurado...</p>`;
-            if (apiEndpoint) {
-                terminalLogs.innerHTML += `<p>> Alvo API: ${apiEndpoint.substring(0, 30)}...</p>`;
-            }
-            backBtn.classList.add('hidden');
+        // Função que faz a requisição HTTP real para a API informada
+        async function executarRequisicaoReal(urlApi, alvo) {
+            progressFill.style.width = '30%';
+            progressPercentage.textContent = '30%';
+            terminalLogs.innerHTML = `<p>> Conectando com: ${urlApi}</p>`;
 
-            const logs = [
-                "> Roteando pacotes via proxy seguro...",
-                "> Estabelecendo handshake com o alvo...",
-                "> Sincronizando instâncias do sistema...",
-                "> Executando rotinas de verificação...",
-                "> Processamento finalizado com sucesso."
-            ];
+            try {
+                // Tenta enviar os dados de verdade via POST (com o número no corpo JSON)
+                // Se a sua API aceitar GET, você pode ajustar conforme a regra dela.
+                const response = await fetch(urlApi, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ target: alvo })
+                });
 
-            let logIndex = 0;
+                progressFill.style.width = '80%';
+                progressPercentage.textContent = '80%';
+                terminalLogs.innerHTML += `<p>> Resposta recebida do servidor...</p>`;
 
-            const interval = setInterval(() => {
-                progress += Math.floor(Math.random() * 15) + 10;
-                
-                if (progress >= 100) {
-                    progress = 100;
-                    clearInterval(interval);
-                    terminalLogs.innerHTML += `<p>> [OK] Operação concluída para o alvo.</p>`;
-                    backBtn.classList.remove('hidden');
-                } else if (logIndex < logs.length) {
-                    terminalLogs.innerHTML += `<p>${logs[logIndex]}</p>`;
-                    logIndex++;
+                if (response.ok) {
+                    progressFill.style.width = '100%';
+                    progressPercentage.textContent = '100%';
+                    terminalLogs.innerHTML += `<p>> [SUCESSO] Dados enviados para a API!</p>`;
+                } else {
+                    progressFill.style.width = '100%';
+                    progressPercentage.textContent = '100%';
+                    terminalLogs.innerHTML += `<p>> [AVISO] O servidor respondeu com status: ${response.status}</p>`;
                 }
 
-                progressFill.style.width = progress + '%';
-                progressPercentage.textContent = progress + '%';
+            } catch (error) {
+                // Caso ocorra erro de CORS ou falha de rede ao chamar a API diretamente do navegador
+                progressFill.style.width = '100%';
+                progressPercentage.textContent = '100%';
+                terminalLogs.innerHTML += `<p style="color: #ef4444;">> [ERRO] Falha na requisição (Pode ser bloqueio CORS da API).</p>`;
+                terminalLogs.innerHTML += `<p style="color: #9ca3af;">Detalhes: ${error.message}</p>`;
+            } finally {
+                backBtn.classList.remove('hidden');
                 terminalLogs.scrollTop = terminalLogs.scrollHeight;
-            }, 600);
+            }
         }
 
-        // Botão para retornar e realizar nova operação
         backBtn.addEventListener('click', () => {
             targetInput.value = '';
             progressScreen.classList.add('hidden');
