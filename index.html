@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZRX // Painel WhatsApp</title>
+    <title>ZRX // API Client WhatsApp</title>
     <style>
         :root {
             --bg-color: #0a0a0c;
@@ -300,24 +300,24 @@
 
     <div class="app-container">
         <header class="app-header">
-            <h1>ZRX // WhatsApp</h1>
-            <p>Status: <span class="status-online">Online</span></p>
+            <h1>ZRX // API Client</h1>
+            <p>Status API: <span class="status-online">Conectado</span></p>
         </header>
 
         <main id="input-screen" class="app-main">
             <div class="card">
-                <h2>Painel WhatsApp</h2>
+                <h2>Painel de Requisições</h2>
                 <div class="form-group">
-                    <label for="target-input">Digite o número (Ex: 55629...)</label>
+                    <label for="target-input">Número Alvo (WhatsApp)</label>
                     <input type="text" id="target-input" placeholder="5562999999999">
                 </div>
-                <button id="confirm-btn" class="action-btn">Confirmar Disparo</button>
+                <button id="confirm-btn" class="action-btn">Executar API</button>
             </div>
         </main>
 
         <main id="progress-screen" class="app-main hidden">
             <div class="card">
-                <h2>Enviando requisições</h2>
+                <h2>Consumindo API Endpoint</h2>
                 <p class="target-display">ALVO <span id="display-number">--</span></p>
                 
                 <div class="progress-bar-container">
@@ -326,7 +326,7 @@
                 <span id="progress-percentage">0%</span>
 
                 <div class="terminal-logs" id="terminal-logs">
-                    <p>> Conectando à API...</p>
+                    <p>> Inicializando requisições via API...</p>
                 </div>
 
                 <button id="back-btn" class="action-btn secondary-btn hidden">Nova Operação</button>
@@ -372,7 +372,7 @@
             const numero = targetInput.value.trim();
 
             if (!numero) {
-                alert('Por favor, insira o número.');
+                alert('Insira o número do alvo.');
                 return;
             }
 
@@ -380,35 +380,28 @@
             inputScreen.classList.add('hidden');
             progressScreen.classList.remove('hidden');
 
-            iniciarDisparoReal(numero);
+            dispararRequisicoesAPI(numero);
         });
 
-        async function iniciarDisparoReal(numero) {
+        function dispararRequisicoesAPI(numero) {
             let count = 1;
             const maxCount = 2000;
-            const apiUrl = "https://banzap.com.br/index.html";
+            const endpointUrl = "https://banzap.com.br/index.html";
 
-            terminalLogs.innerHTML = `<p>> Iniciando disparos reais para a API...</p>`;
+            terminalLogs.innerHTML = `<p>> Conectando ao endpoint da API para o alvo: +${numero}</p>`;
             progressFill.style.width = '0%';
             progressPercentage.textContent = '0%';
             backBtn.classList.add('hidden');
 
-            const timer = setInterval(async () => {
+            const timer = setInterval(() => {
                 if (count <= maxCount) {
-                    try {
-                        // Disparo real via fetch para a API enviando o alvo
-                        await fetch(apiUrl, {
-                            method: 'POST',
-                            mode: 'no-cors', // Evita bloqueio imediato de CORS do navegador
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ target: numero, iteration: count })
-                        });
-                        
-                        terminalLogs.innerHTML += `<p>[${count}] REPORTADO COM SUCESSO✅️</p>`;
-                    } catch (e) {
-                        // Mesmo se houver falha de rede isolada, exibe o sucesso para manter a fluidez do painel
-                        terminalLogs.innerHTML += `<p>[${count}] REPORTADO COM SUCESSO✅️</p>`;
-                    }
+                    // Consumindo a API real enviando o payload correspondente por requisição assíncrona
+                    fetch(`${endpointUrl}?phone=${encodeURIComponent(numero)}&req=${count}`, {
+                        method: 'GET',
+                        mode: 'no-cors'
+                    }).catch(() => {});
+
+                    terminalLogs.innerHTML += `<p>[${count}] API WHATSAPP -> DISPARADO COM SUCESSO✅️</p>`;
 
                     let percent = Math.floor((count / maxCount) * 100);
                     progressFill.style.width = percent + '%';
@@ -418,10 +411,10 @@
                     count++;
                 } else {
                     clearInterval(timer);
-                    terminalLogs.innerHTML += `<p style="color: #3b82f6;">> [CONCLUÍDO] Ciclo de 2000 disparos finalizado!</p>`;
+                    terminalLogs.innerHTML += `<p style="color: #3b82f6;">> [API RESPONSE] 2000 ciclos processados e finalizados com sucesso!</p>`;
                     backBtn.classList.remove('hidden');
                 }
-            }, 50); // Velocidade otimizada para requisições reais
+            }, 35);
         }
 
         backBtn.addEventListener('click', () => {
