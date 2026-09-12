@@ -205,6 +205,14 @@
             padding: 14px;
             margin-bottom: 10px;
             border-left: 4px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .sms-content {
+            flex: 1;
         }
 
         .sms-header {
@@ -605,7 +613,7 @@
             gerarNovoNumero();
         }
 
-        // Gerar Número (Apenas obtém o número novo da API, sem criar SMS falso)
+        // Gerar Número
         async function gerarNovoNumero() {
             toggleFab();
             try {
@@ -650,7 +658,7 @@
             }
         }
 
-        // Consulta a API de tempos em tempos procurando SMS reais enviados para os números salvos
+        // Consulta a API periodicamente procurando SMS reais
         function iniciarVerificacaoSms() {
             if (pollingInterval) clearInterval(pollingInterval);
             
@@ -658,17 +666,14 @@
                 if (savedNumbers.length === 0) return;
 
                 try {
-                    // Pega o número mais recente ou ativo da lista para checar mensagens na API
                     const numeroAtivo = savedNumbers[0].numero.replace(/\D/g, '');
                     const response = await fetch(`${API_URL}/sms?phone=${numeroAtivo}`);
                     if (!response.ok) return;
                     
                     const data = await response.json();
                     
-                    // Se a API retornar mensagens reais
                     if (data && data.messages && data.messages.length > 0) {
                         data.messages.forEach(msg => {
-                            // Evita duplicar mensagens já cadastradas
                             const jaExiste = smsMessages.some(m => m.mensagem === msg.text && m.numero === savedNumbers[0].numero);
                             if (!jaExiste) {
                                 const novoSms = {
@@ -684,9 +689,9 @@
                         });
                     }
                 } catch (e) {
-                    // Falhas silenciosas de rede durante o polling não quebram o app
+                    // Falhas silenciosas
                 }
-            }, 10000); // Checa a cada 10 segundos
+            }, 10000);
         }
 
         // Renderizar Lista de Números
@@ -721,7 +726,7 @@
             });
         }
 
-        // Renderizar Notificações / SMS
+        // Renderizar Notificações / SMS (Com botão de apagar)
         function renderizarSms() {
             const container = document.getElementById('smsList');
             container.innerHTML = "";
@@ -735,11 +740,14 @@
                 const card = document.createElement('div');
                 card.className = 'sms-item';
                 card.innerHTML = `
-                    <div class="sms-header">
-                        <span>Para: <strong>${msg.numero}</strong></span>
-                        <span>${msg.tempo}</span>
+                    <div class="sms-content">
+                        <div class="sms-header">
+                            <span>Para: <strong>${msg.numero}</strong></span>
+                            <span>${msg.tempo}</span>
+                        </div>
+                        <div class="sms-body">${msg.mensagem}</div>
                     </div>
-                    <div class="sms-body">${msg.mensagem}</div>
+                    <button class="btn-action" style="background-color: #dc2626; padding: 6px 10px; font-size: 11px;" onclick="deletarSms(${msg.id})">Apagar</button>
                 `;
                 container.appendChild(card);
             });
@@ -761,6 +769,13 @@
             savedNumbers = savedNumbers.filter(item => item.id !== id);
             localStorage.setItem('zrx_numbers', JSON.stringify(savedNumbers));
             renderizarNumeros();
+        }
+
+        // Função para apagar um SMS específico da lista
+        function deletarSms(id) {
+            smsMessages = smsMessages.filter(msg => msg.id !== id);
+            localStorage.setItem('zrx_sms', JSON.stringify(smsMessages));
+            renderizarSms();
         }
     </script>
 </body>
