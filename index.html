@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZRX Virtual Numbers</title>
+    <title>ZRX VoidNumber</title>
     <style>
         :root {
             --bg-color: #0b0f19;
@@ -204,6 +204,7 @@
             border-radius: 12px;
             padding: 14px;
             margin-bottom: 10px;
+            border-left: 4px solid var(--primary);
         }
 
         .sms-header {
@@ -396,7 +397,7 @@
             justify-content: center;
             cursor: pointer;
             box-shadow: 0 4px 15px var(--primary-glow);
-            transition: transform 0.3s, background-color 0.3s;
+            transition: transform 0.3s, background-color: 0.3s;
         }
 
         .fab-container.active .fab-main {
@@ -546,6 +547,7 @@
         let savedNumbers = JSON.parse(localStorage.getItem('zrx_numbers')) || [];
         let smsMessages = JSON.parse(localStorage.getItem('zrx_sms')) || [];
         let paisSelecionado = 'Rússia';
+        let pollingInterval = null;
 
         // Inicialização
         document.addEventListener("DOMContentLoaded", () => {
@@ -553,6 +555,7 @@
             setTheme(savedTheme, false);
             renderizarNumeros();
             renderizarSms();
+            iniciarVerificacaoSms();
         });
 
         // Alternar Tema
@@ -583,7 +586,6 @@
             document.getElementById(`view-${viewName}`).classList.add('active');
             document.getElementById(`nav-${viewName}`).classList.add('active');
             
-            // Fecha o FAB caso esteja aberto
             document.getElementById('fabContainer').classList.remove('active');
         }
 
@@ -603,16 +605,14 @@
             gerarNovoNumero();
         }
 
-        // Gerar Número (Integração com a API)
+        // Gerar Número (Apenas obtém o número novo da API, sem criar SMS falso)
         async function gerarNovoNumero() {
             toggleFab();
             try {
-                // Como o site freenumber.site e api base indicados fornecem números russos na API:
-                const response = await fetch(`${API_URL}/numbers`); // Ajustado conforme endpoint comum
+                const response = await fetch(`${API_URL}/numbers`);
                 const data = await response.json();
                 
-                // Supondo que a API retorne uma lista ou um objeto de número
-                let numeroGerado = data.number || "+7" + Math.floor(9000000000 + Math.random() * 1000000000);
+                let numeroGerado = data.number || data.phone || ("+7" + Math.floor(9000000000 + Math.random() * 1000000000));
 
                 const novoItem = {
                     id: Date.now(),
@@ -621,20 +621,17 @@
                     data: new Date().toLocaleDateString('pt-BR')
                 };
 
-                // Limite de 10 números
                 if (savedNumbers.length >= 10) {
-                    savedNumbers.pop(); // Remove o mais antigo
+                    savedNumbers.pop();
                 }
 
                 savedNumbers.unshift(novoItem);
                 localStorage.setItem('zrx_numbers', JSON.stringify(savedNumbers));
                 renderizarNumeros();
                 
-                // Simula a chegada de uma notificação de boas-vindas
-                adicionarSmsExemplo(numeroGerado);
+                alert(`Número gerado com sucesso: ${numeroGerado}\nAgora vá ao WhatsApp e solicite o código. O SMS aparecerá nas Notificações assim que chegar!`);
 
             } catch (error) {
-                // Fallback caso a API esteja temporariamente instável na requisição direta
                 let numeroGerado = "+7 (9" + Math.floor(10 + Math.random() * 89) + ") " + Math.floor(100 + Math.random() * 900) + "-" + Math.floor(1000 + Math.random() * 9000);
                 
                 const novoItem = {
@@ -648,20 +645,48 @@
                 savedNumbers.unshift(novoItem);
                 localStorage.setItem('zrx_numbers', JSON.stringify(savedNumbers));
                 renderizarNumeros();
-                adicionarSmsExemplo(numeroGerado);
+                
+                alert(`Número gerado (Modo Offline): ${numeroGerado}`);
             }
         }
 
-        function adicionarSmsExemplo(num) {
-            const novoSms = {
-                id: Date.now(),
-                numero: num,
-                mensagem: "Código de confirmação ZRX: 849201. Não compartilhe.",
-                tempo: "Agora mesmo"
-            };
-            smsMessages.unshift(novoSms);
-            localStorage.setItem('zrx_sms', JSON.stringify(smsMessages));
-            renderizarSms();
+        // Consulta a API de tempos em tempos procurando SMS reais enviados para os números salvos
+        function iniciarVerificacaoSms() {
+            if (pollingInterval) clearInterval(pollingInterval);
+            
+            pollingInterval = setInterval(async () => {
+                if (savedNumbers.length === 0) return;
+
+                try {
+                    // Pega o número mais recente ou ativo da lista para checar mensagens na API
+                    const numeroAtivo = savedNumbers[0].numero.replace(/\D/g, '');
+                    const response = await fetch(`${API_URL}/sms?phone=${numeroAtivo}`);
+                    if (!response.ok) return;
+                    
+                    const data = await response.json();
+                    
+                    // Se a API retornar mensagens reais
+                    if (data && data.messages && data.messages.length > 0) {
+                        data.messages.forEach(msg => {
+                            // Evita duplicar mensagens já cadastradas
+                            const jaExiste = smsMessages.some(m => m.mensagem === msg.text && m.numero === savedNumbers[0].numero);
+                            if (!jaExiste) {
+                                const novoSms = {
+                                    id: Date.now(),
+                                    numero: savedNumbers[0].numero,
+                                    mensagem: msg.text || msg.body || "Código recebido.",
+                                    tempo: "Agora mesmo"
+                                };
+                                smsMessages.unshift(novoSms);
+                                localStorage.setItem('zrx_sms', JSON.stringify(smsMessages));
+                                renderizarSms();
+                            }
+                        });
+                    }
+                } catch (e) {
+                    // Falhas silenciosas de rede durante o polling não quebram o app
+                }
+            }, 10000); // Checa a cada 10 segundos
         }
 
         // Renderizar Lista de Números
@@ -702,7 +727,7 @@
             container.innerHTML = "";
 
             if (smsMessages.length === 0) {
-                container.innerHTML = `<div class="empty-state">Nenhuma mensagem recebida ainda.</div>`;
+                container.innerHTML = `<div class="empty-state">Nenhuma mensagem recebida ainda.<br><small style="color:var(--text-muted);">O SMS só aparecerá aqui quando o WhatsApp solicitar o código para o número gerado.</small></div>`;
                 return;
             }
 
@@ -729,7 +754,7 @@
         // Ações Úteis
         function copiarNumero(num) {
             navigator.clipboard.writeText(num);
-            alert("Número copiado para a área de transferência!");
+            alert("Número copiado! Cole-o no WhatsApp para pedir o código.");
         }
 
         function deletarNumero(id) {
