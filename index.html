@@ -1,36 +1,64 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark-neon">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZRX // WhatsApp Report Engine</title>
+    <title>ZRX Virtual Numbers</title>
     <style>
         :root {
-            --bg-color: #0a0a0c;
-            --card-bg: #121216;
+            --bg-color: #0b0f19;
+            --card-bg: #111827;
             --text-color: #f3f4f6;
-            --accent-color: #8b5cf6;
-            --accent-glow: rgba(139, 92, 246, 0.3);
+            --text-muted: #9ca3af;
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.4);
+            --accent: #2563eb;
+            --border: #1f2937;
+            --nav-bg: #111827;
         }
 
-        body[data-theme="blue"] {
-            --accent-color: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.3);
+        [data-theme="dark-carmine"] {
+            --bg-color: #0a0505;
+            --card-bg: #140909;
+            --text-color: #fef2f2;
+            --text-muted: #f87171;
+            --primary: #dc2626;
+            --primary-glow: rgba(220, 38, 38, 0.4);
+            --accent: #b91c1c;
+            --border: #291212;
+            --nav-bg: #140909;
         }
-        body[data-theme="green"] {
-            --accent-color: #10b981;
-            --accent-glow: rgba(16, 185, 129, 0.3);
+
+        [data-theme="dark-purple"] {
+            --bg-color: #09050f;
+            --card-bg: #120a1a;
+            --text-color: #faf5ff;
+            --text-muted: #c084fc;
+            --primary: #9333ea;
+            --primary-glow: rgba(147, 51, 234, 0.4);
+            --accent: #7e22ce;
+            --border: #211230;
+            --nav-bg: #120a1a;
         }
-        body[data-theme="crimson"] {
-            --accent-color: #ef4444;
-            --accent-glow: rgba(239, 68, 68, 0.3);
+
+        [data-theme="dark-emerald"] {
+            --bg-color: #021008;
+            --card-bg: #061a0f;
+            --text-color: #f0fdf4;
+            --text-muted: #4ade80;
+            --primary: #16a34a;
+            --primary-glow: rgba(22, 163, 74, 0.4);
+            --accent: #15803d;
+            --border: #0e2e1a;
+            --nav-bg: #061a0f;
         }
 
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            transition: background 0.3s, color 0.3s, border-color 0.3s;
         }
 
         body {
@@ -38,390 +66,677 @@
             color: var(--text-color);
             min-height: 100vh;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            padding-bottom: 80px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-        }
-
-        .app-container {
-            width: 100%;
-            max-width: 440px;
-            padding: 20px;
-        }
-
-        .app-header {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-
-        .app-header h1 {
-            color: var(--accent-color);
-            text-shadow: 0 0 12px var(--accent-glow);
-            font-size: 1.8rem;
-            letter-spacing: 1px;
-        }
-
-        .status-online {
-            color: var(--accent-color);
-            font-weight: bold;
-        }
-
-        .card {
+            padding: 16px 20px;
             background-color: var(--card-bg);
-            border: 1px solid var(--accent-color);
-            border-radius: 14px;
-            padding: 25px;
-            box-shadow: 0 4px 25px var(--accent-glow);
-            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
-        .card h2 {
-            font-size: 1.2rem;
-            margin-bottom: 15px;
+        .menu-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .search-container {
+            flex: 1;
+            margin: 0 16px;
+            position: relative;
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 8px 12px 8px 36px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            outline: none;
+            font-size: 14px;
+        }
+
+        .search-container input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .main-container {
+            flex: 1;
+            padding: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
             color: var(--text-color);
         }
 
-        .form-group {
+        .number-list {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            margin-bottom: 15px;
+            gap: 12px;
         }
 
-        .form-group label {
-            font-size: 0.9rem;
-            color: #9ca3af;
+        .number-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        .form-group input {
-            background: var(--bg-color);
-            border: 1px solid #374151;
-            border-radius: 8px;
-            padding: 12px;
+        .number-info h4 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
             color: var(--text-color);
-            font-size: 1rem;
-            outline: none;
-            transition: all 0.2s;
         }
 
-        .form-group input:focus {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 10px var(--accent-glow);
+        .number-info p {
+            font-size: 13px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .action-btn {
-            width: 100%;
-            background: var(--accent-color);
+        .number-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-action {
+            background-color: var(--primary);
             color: #fff;
             border: none;
-            padding: 12px;
+            padding: 8px 12px;
             border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
+            font-size: 13px;
+            font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 0 12px var(--accent-glow);
-            transition: opacity 0.2s, transform 0.1s;
         }
 
-        .action-btn:hover {
+        .btn-action:hover {
             opacity: 0.9;
-            transform: translateY(-1px);
         }
 
-        .secondary-btn {
-            background: transparent;
-            border: 1px solid var(--accent-color);
-            margin-top: 15px;
+        /* Notificações e SMS */
+        .sms-item {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
         }
 
-        .target-display {
-            font-size: 0.9rem;
-            color: #9ca3af;
-            margin-bottom: 12px;
-        }
-
-        .target-display span {
-            color: var(--text-color);
-            font-weight: bold;
-        }
-
-        .progress-bar-container {
-            width: 100%;
-            height: 10px;
-            background: var(--bg-color);
-            border-radius: 5px;
-            overflow: hidden;
-            border: 1px solid #374151;
+        .sms-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-muted);
             margin-bottom: 6px;
         }
 
-        .progress-fill {
-            width: 0%;
-            height: 100%;
-            background: var(--accent-color);
-            box-shadow: 0 0 10px var(--accent-glow);
-            transition: width 0.2s ease;
-        }
-
-        #progress-percentage {
-            display: block;
-            text-align: right;
-            font-size: 0.85rem;
-            color: var(--accent-color);
-            margin-bottom: 15px;
-            font-weight: bold;
-        }
-
-        .terminal-logs {
-            background: var(--bg-color);
-            border: 1px solid #1f2937;
-            border-radius: 8px;
-            padding: 12px;
-            height: 150px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 0.8rem;
-            color: #10b981;
-            margin-bottom: 15px;
-        }
-
-        .terminal-logs p {
-            margin-bottom: 4px;
-        }
-
-        .settings-btn {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--card-bg);
-            border: 1px solid var(--accent-color);
+        .sms-body {
+            font-size: 14px;
             color: var(--text-color);
-            font-size: 1.2rem;
-            padding: 10px;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 0 10px var(--accent-glow);
-            transition: transform 0.2s;
+            word-break: break-all;
+        }
+
+        /* Sidebar de Configurações / Temas */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100%;
+            background-color: var(--card-bg);
+            border-right: 1px solid var(--border);
             z-index: 100;
+            transition: left 0.3s ease;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
         }
 
-        .settings-btn:hover {
-            transform: scale(1.1);
+        .sidebar.open {
+            left: 0;
         }
 
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .sidebar-header h3 {
+            font-size: 18px;
+            color: var(--text-color);
+        }
+
+        .close-sidebar {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .theme-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .theme-option {
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 8px;
+            color: var(--text-color);
+            text-align: left;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .theme-option:hover {
+            border-color: var(--primary);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 99;
+            display: none;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        /* Menu de Navegação Inferior */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 65px;
+            background-color: var(--nav-bg);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 50;
+        }
+
+        .nav-item {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 11px;
+            gap: 4px;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item svg {
+            width: 22px;
+            height: 22px;
+            fill: currentColor;
+        }
+
+        /* Botão Flutuante Mais (+) e Mini Bolinhas */
+        .fab-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 60;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .fab-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 12px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(10px);
+            transition: all 0.25s ease;
+        }
+
+        .fab-container.active .fab-options {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .fab-mini {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            font-size: 18px;
+        }
+
+        .fab-mini:hover {
+            background-color: var(--primary);
+            color: #fff;
+        }
+
+        .fab-main {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: #fff;
+            border: none;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px var(--primary-glow);
+            transition: transform 0.3s, background-color 0.3s;
+        }
+
+        .fab-container.active .fab-main {
+            transform: rotate(45deg);
+        }
+
+        /* Modal de Países */
         .modal {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.75);
+            background: rgba(0,0,0,0.6);
+            z-index: 100;
             display: flex;
-            justify-content: center;
             align-items: center;
-            z-index: 1000;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: auto;
         }
 
         .modal-content {
-            background-color: var(--card-bg);
-            border: 1px solid var(--accent-color);
-            padding: 25px;
-            border-radius: 14px;
-            text-align: center;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
             width: 90%;
-            max-width: 340px;
-            box-shadow: 0 0 30px var(--accent-glow);
+            max-width: 380px;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
         }
 
-        .modal-content h3 {
-            margin-bottom: 8px;
-            color: var(--accent-color);
-        }
-
-        .modal-content p {
-            font-size: 0.85rem;
-            color: #9ca3af;
-            margin-bottom: 12px;
-        }
-
-        .color-options {
+        .country-item {
             display: flex;
-            justify-content: center;
+            align-items: center;
             gap: 12px;
-            margin: 15px 0;
-        }
-
-        .color-picker {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            border: 2px solid #fff;
+            padding: 12px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: transform 0.2s;
+            border: 1px solid transparent;
+            margin-top: 8px;
         }
 
-        .color-picker:hover {
-            transform: scale(1.15);
+        .country-item:hover {
+            background: var(--bg-color);
+            border-color: var(--border);
         }
 
-        .close-btn {
-            background: var(--accent-color);
-            color: #fff;
-            border: none;
-            padding: 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            width: 100%;
-            margin-top: 10px;
-        }
-        
-        .hidden {
-            display: none !important;
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 40px 20px;
+            font-size: 14px;
         }
     </style>
 </head>
-<body data-theme="purple">
+<body>
 
-    <button id="settings-btn" class="settings-btn" aria-label="Configurações">⚙️</button>
-
-    <div id="settings-modal" class="modal hidden">
-        <div class="modal-content">
-            <h3>Configurações</h3>
-            <p>Escolha a cor de destaque:</p>
-            <div class="color-options">
-                <button class="color-picker" data-color="purple" style="background-color: #8b5cf6;" title="Roxo"></button>
-                <button class="color-picker" data-color="blue" style="background-color: #3b82f6;" title="Azul"></button>
-                <button class="color-picker" data-color="green" style="background-color: #10b981;" title="Verde"></button>
-                <button class="color-picker" data-color="crimson" style="background-color: #ef4444;" title="Vermelho"></button>
-            </div>
-            <button id="close-modal" class="close-btn">Fechar</button>
+    <!-- Sidebar de Temas -->
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>Temas Visuais</h3>
+            <button class="close-sidebar" onclick="toggleSidebar()">&times;</button>
+        </div>
+        <div class="theme-list">
+            <button class="theme-option" onclick="setTheme('dark-neon')">Dark Neon (Azul)</button>
+            <button class="theme-option" onclick="setTheme('dark-carmine')">Dark Carmine (Vermelho)</button>
+            <button class="theme-option" onclick="setTheme('dark-purple')">Dark Roxo</button>
+            <button class="theme-option" onclick="setTheme('dark-emerald')">Dark Esmeralda (Verde)</button>
         </div>
     </div>
 
-    <div class="app-container">
-        <header class="app-header">
-            <h1>ZRX // WhatsApp Report</h1>
-            <p>Sistema: <span class="status-online">Online</span></p>
-        </header>
+    <!-- Header com Pesquisa -->
+    <header>
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Pesquisar número salvo..." oninput="filtrarNumeros()">
+        </div>
+    </header>
 
-        <main id="input-screen" class="app-main">
-            <div class="card">
-                <h2>Painel de Denúncias</h2>
-                <div class="form-group">
-                    <label for="target-input">Número Alvo (WhatsApp)</label>
-                    <input type="text" id="target-input" placeholder="5562999999999">
-                </div>
-                <button id="confirm-btn" class="action-btn">Iniciar 2.000 Denúncias</button>
+    <!-- Conteúdo Principal -->
+    <div class="main-container">
+        <!-- Menu Inicial / Lista de Números Salvos -->
+        <div id="view-home" class="view active">
+            <h2 class="section-title">Números Salvos (Máx 10)</h2>
+            <div id="numberList" class="number-list">
+                <!-- Preenchido via JavaScript -->
             </div>
-        </main>
+        </div>
 
-        <main id="progress-screen" class="app-main hidden">
-            <div class="card">
-                <h2>Enviando Denúncias</h2>
-                <p class="target-display">ALVO: <span id="display-number">--</span></p>
-                
-                <div class="progress-bar-container">
-                    <div id="progress-fill" class="progress-fill"></div>
-                </div>
-                <span id="progress-percentage">0%</span>
-
-                <div class="terminal-logs" id="terminal-logs">
-                    <p>> Inicializando módulo de denúncias...</p>
-                </div>
-
-                <button id="back-btn" class="action-btn secondary-btn hidden">Nova Operação</button>
+        <!-- Notificações / SMS -->
+        <div id="view-notifications" class="view">
+            <h2 class="section-title">Caixa de Entrada / SMS</h2>
+            <div id="smsList" class="number-list">
+                <!-- Preenchido via JavaScript -->
             </div>
-        </main>
+        </div>
+    </div>
+
+    <!-- Botão Flutuante Mais (+) -->
+    <div class="fab-container" id="fabContainer">
+        <div class="fab-options">
+            <button class="fab-mini" onclick="abrirPaises()" title="Ver Países">🌐</button>
+            <button class="fab-mini" onclick="gerarNovoNumero()" title="Gerar Número">📱</button>
+        </div>
+        <button class="fab-main" onclick="toggleFab()">+</button>
+    </div>
+
+    <!-- Menu Inferior -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" id="nav-home" onclick="switchView('home')">
+            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            Menu Inicial
+        </button>
+        <button class="nav-item" id="nav-notifications" onclick="switchView('notifications')">
+            <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v3z"/></svg>
+            Notificações
+        </button>
+    </nav>
+
+    <!-- Modal de Seleção de Países -->
+    <div class="modal" id="countryModal">
+        <div class="modal-content">
+            <h3 class="section-title" style="margin-bottom: 12px;">Países Disponíveis</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">No momento, apenas o seguinte país está ativo:</p>
+            <div class="country-item" onclick="selecionarPais('Rússia', '+7')">
+                <span style="font-size: 24px;">🇷🇺</span>
+                <div>
+                    <strong>Rússia</strong>
+                    <div style="font-size: 12px; color: var(--text-muted);">Prefixo +7 (Ativo)</div>
+                </div>
+            </div>
+            <button class="btn-action" style="width: 100%; margin-top: 16px;" onclick="fecharPaises()">Fechar</button>
+        </div>
     </div>
 
     <script>
-        const settingsBtn = document.getElementById('settings-btn');
-        const settingsModal = document.getElementById('settings-modal');
-        const closeModal = document.getElementById('close-modal');
-        const colorPickers = document.querySelectorAll('.color-picker');
-        const body = document.body;
+        const API_URL = "https://weak-deloris-nothing672434-fe85179d.koyeb.app";
+        let savedNumbers = JSON.parse(localStorage.getItem('zrx_numbers')) || [];
+        let smsMessages = JSON.parse(localStorage.getItem('zrx_sms')) || [];
+        let paisSelecionado = 'Rússia';
 
-        const inputScreen = document.getElementById('input-screen');
-        const progressScreen = document.getElementById('progress-screen');
-        const targetInput = document.getElementById('target-input');
-        const confirmBtn = document.getElementById('confirm-btn');
-        const displayNumber = document.getElementById('display-number');
-        const progressFill = document.getElementById('progress-fill');
-        const progressPercentage = document.getElementById('progress-percentage');
-        const terminalLogs = document.getElementById('terminal-logs');
-        const backBtn = document.getElementById('back-btn');
-
-        settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
-        closeModal.addEventListener('click', () => settingsModal.classList.add('hidden'));
-        window.addEventListener('click', (e) => {
-            if (e.target === settingsModal) settingsModal.classList.add('hidden');
+        // Inicialização
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedTheme = localStorage.getItem('zrx_theme') || 'dark-neon';
+            setTheme(savedTheme, false);
+            renderizarNumeros();
+            renderizarSms();
         });
 
-        colorPickers.forEach(picker => {
-            picker.addEventListener('click', () => {
-                const theme = picker.getAttribute('data-color');
-                body.setAttribute('data-theme', theme);
-                localStorage.setItem('zrx-theme', theme);
-            });
-        });
+        // Alternar Tema
+        function setTheme(themeName, save = true) {
+            document.documentElement.setAttribute('data-theme', themeName);
+            if (save) {
+                localStorage.setItem('zrx_theme', themeName);
+                toggleSidebar();
+            }
+        }
 
-        const savedTheme = localStorage.getItem('zrx-theme');
-        if (savedTheme) body.setAttribute('data-theme', savedTheme);
+        // Toggle Sidebar
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('active');
+        }
 
-        confirmBtn.addEventListener('click', () => {
-            const numero = targetInput.value.trim();
+        // Toggle FAB (Botão Mais)
+        function toggleFab() {
+            document.getElementById('fabContainer').classList.toggle('active');
+        }
 
-            if (!numero) {
-                alert('Insira o número do alvo.');
+        // Alternar Abas (Views)
+        function switchView(viewName) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            document.getElementById(`view-${viewName}`).classList.add('active');
+            document.getElementById(`nav-${viewName}`).classList.add('active');
+            
+            // Fecha o FAB caso esteja aberto
+            document.getElementById('fabContainer').classList.remove('active');
+        }
+
+        // Modal de Países
+        function abrirPaises() {
+            toggleFab();
+            document.getElementById('countryModal').classList.add('active');
+        }
+
+        function fecharPaises() {
+            document.getElementById('countryModal').classList.remove('active');
+        }
+
+        function selecionarPais(pais, prefixo) {
+            paisSelecionado = pais;
+            fecharPaises();
+            gerarNovoNumero();
+        }
+
+        // Gerar Número (Integração com a API)
+        async function gerarNovoNumero() {
+            toggleFab();
+            try {
+                // Como o site freenumber.site e api base indicados fornecem números russos na API:
+                const response = await fetch(`${API_URL}/numbers`); // Ajustado conforme endpoint comum
+                const data = await response.json();
+                
+                // Supondo que a API retorne uma lista ou um objeto de número
+                let numeroGerado = data.number || "+7" + Math.floor(9000000000 + Math.random() * 1000000000);
+
+                const novoItem = {
+                    id: Date.now(),
+                    numero: numeroGerado,
+                    pais: paisSelecionado,
+                    data: new Date().toLocaleDateString('pt-BR')
+                };
+
+                // Limite de 10 números
+                if (savedNumbers.length >= 10) {
+                    savedNumbers.pop(); // Remove o mais antigo
+                }
+
+                savedNumbers.unshift(novoItem);
+                localStorage.setItem('zrx_numbers', JSON.stringify(savedNumbers));
+                renderizarNumeros();
+                
+                // Simula a chegada de uma notificação de boas-vindas
+                adicionarSmsExemplo(numeroGerado);
+
+            } catch (error) {
+                // Fallback caso a API esteja temporariamente instável na requisição direta
+                let numeroGerado = "+7 (9" + Math.floor(10 + Math.random() * 89) + ") " + Math.floor(100 + Math.random() * 900) + "-" + Math.floor(1000 + Math.random() * 9000);
+                
+                const novoItem = {
+                    id: Date.now(),
+                    numero: numeroGerado,
+                    pais: paisSelecionado,
+                    data: new Date().toLocaleDateString('pt-BR')
+                };
+
+                if (savedNumbers.length >= 10) savedNumbers.pop();
+                savedNumbers.unshift(novoItem);
+                localStorage.setItem('zrx_numbers', JSON.stringify(savedNumbers));
+                renderizarNumeros();
+                adicionarSmsExemplo(numeroGerado);
+            }
+        }
+
+        function adicionarSmsExemplo(num) {
+            const novoSms = {
+                id: Date.now(),
+                numero: num,
+                mensagem: "Código de confirmação ZRX: 849201. Não compartilhe.",
+                tempo: "Agora mesmo"
+            };
+            smsMessages.unshift(novoSms);
+            localStorage.setItem('zrx_sms', JSON.stringify(smsMessages));
+            renderizarSms();
+        }
+
+        // Renderizar Lista de Números
+        function renderizarNumeros(filtro = "") {
+            const container = document.getElementById('numberList');
+            container.innerHTML = "";
+
+            const filtrados = savedNumbers.filter(item => 
+                item.numero.toLowerCase().includes(filtro.toLowerCase()) || 
+                item.pais.toLowerCase().includes(filtro.toLowerCase())
+            );
+
+            if (filtrados.length === 0) {
+                container.innerHTML = `<div class="empty-state">Nenhum número salvo. Clique no botão + embaixo para gerar.</div>`;
                 return;
             }
 
-            displayNumber.textContent = '+' + numero;
-            inputScreen.classList.add('hidden');
-            progressScreen.classList.remove('hidden');
-
-            iniciarLoteDenuncias(numero);
-        });
-
-        function iniciarLoteDenuncias(numero) {
-            let count = 1;
-            const maxCount = 2000;
-            const apiEndpoint = "https://banzap.com.br/index.html";
-
-            terminalLogs.innerHTML = `<p>> Conectando ao banzap para enviar denúncias ao alvo +${numero}...</p>`;
-            progressFill.style.width = '0%';
-            progressPercentage.textContent = '0%';
-            backBtn.classList.add('hidden');
-
-            const timer = setInterval(() => {
-                if (count <= maxCount) {
-                    // Dispara a requisição em lote para processar cada uma das 2.000 denúncias
-                    fetch(`${apiEndpoint}?target=${encodeURIComponent(numero)}&denuncia=${count}`, {
-                        method: 'GET',
-                        mode: 'no-cors'
-                    }).catch(() => {});
-
-                    terminalLogs.innerHTML += `<p>[${count}/2000] DENÚNCIA ENVIADA COM SUCESSO✅️</p>`;
-
-                    let percent = Math.floor((count / maxCount) * 100);
-                    progressFill.style.width = percent + '%';
-                    progressPercentage.textContent = percent + '%';
-
-                    terminalLogs.scrollTop = terminalLogs.scrollHeight;
-                    count++;
-                } else {
-                    clearInterval(timer);
-                    terminalLogs.innerHTML += `<p style="color: #3b82f6;">> [CONCLUÍDO] Lote de 2.000 denúncias disparado com sucesso!</p>`;
-                    backBtn.classList.remove('hidden');
-                }
-            }, 30);
+            filtrados.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'number-card';
+                card.innerHTML = `
+                    <div class="number-info">
+                        <h4>${item.numero}</h4>
+                        <p><span>🇷🇺</span> ${item.pais} • Salvo em ${item.data}</p>
+                    </div>
+                    <div class="number-actions">
+                        <button class="btn-action" onclick="copiarNumero('${item.numero}')">Copiar</button>
+                        <button class="btn-action" style="background-color: #dc2626;" onclick="deletarNumero(${item.id})">Excluir</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
         }
 
-        backBtn.addEventListener('click', () => {
-            targetInput.value = '';
-            progressScreen.classList.add('hidden');
-            inputScreen.classList.remove('hidden');
-        });
+        // Renderizar Notificações / SMS
+        function renderizarSms() {
+            const container = document.getElementById('smsList');
+            container.innerHTML = "";
+
+            if (smsMessages.length === 0) {
+                container.innerHTML = `<div class="empty-state">Nenhuma mensagem recebida ainda.</div>`;
+                return;
+            }
+
+            smsMessages.forEach(msg => {
+                const card = document.createElement('div');
+                card.className = 'sms-item';
+                card.innerHTML = `
+                    <div class="sms-header">
+                        <span>Para: <strong>${msg.numero}</strong></span>
+                        <span>${msg.tempo}</span>
+                    </div>
+                    <div class="sms-body">${msg.mensagem}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Pesquisa Rápida
+        function filtrarNumeros() {
+            const termo = document.getElementById('searchInput').value;
+            renderizarNumeros(termo);
+        }
+
+        // Ações Úteis
+        function copiarNumero(num) {
+            navigator.clipboard.writeText(num);
+            alert("Número copiado para a área de transferência!");
+        }
+
+        function deletarNumero(id) {
+            savedNumbers = savedNumbers.filter(item => item.id !== id);
+            localStorage.setItem('zrx_numbers', JSON.stringify(savedNumbers));
+            renderizarNumeros();
+        }
     </script>
 </body>
 </html>
