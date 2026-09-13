@@ -538,12 +538,42 @@
     <div class="modal" id="countryModal">
         <div class="modal-content">
             <h3 class="section-title" style="margin-bottom: 12px;">Países Disponíveis</h3>
-            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">No momento, apenas o seguinte país está ativo:</p>
-            <div class="country-item" onclick="selecionarPais('Rússia', '+7')">
-                <span style="font-size: 24px;">🇷🇺</span>
-                <div>
-                    <strong>Rússia</strong>
-                    <div style="font-size: 12px; color: var(--text-muted);">Prefixo +7 (Ativo)</div>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">Selecione o país para gerar o número:</p>
+            <div id="countryListContainer" style="display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto;">
+                <div class="country-item" onclick="selecionarPais('Rússia', 'Russia_Numbers', '🇷🇺')">
+                    <span style="font-size: 24px;">🇷🇺</span>
+                    <div>
+                        <strong>Rússia</strong>
+                        <div style="font-size: 12px; color: var(--text-muted);">Prefixo +7 (Ativo)</div>
+                    </div>
+                </div>
+                <div class="country-item" onclick="selecionarPais('Laos', 'Laos_Numbers_Random', '🇱🇦')">
+                    <span style="font-size: 24px;">🇱🇦</span>
+                    <div>
+                        <strong>Laos</strong>
+                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: Laos_Numbers_Random</div>
+                    </div>
+                </div>
+                <div class="country-item" onclick="selecionarPais('Nigéria', 'Nigeria_Numbers (6)', '🇳🇬')">
+                    <span style="font-size: 24px;">🇳🇬</span>
+                    <div>
+                        <strong>Nigéria</strong>
+                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: Nigeria_Numbers (6)</div>
+                    </div>
+                </div>
+                <div class="country-item" onclick="selecionarPais('SMS Geral', 'SMSNumbers (86)', '🌐')">
+                    <span style="font-size: 24px;">🌐</span>
+                    <div>
+                        <strong>SMS Geral</strong>
+                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: SMSNumbers (86)</div>
+                    </div>
+                </div>
+                <div class="country-item" onclick="selecionarPais('Sudão', 'Sudan_Numbers 2000', '🇸🇩')">
+                    <span style="font-size: 24px;">🇸🇩</span>
+                    <div>
+                        <strong>Sudão</strong>
+                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: Sudan_Numbers 2000</div>
+                    </div>
                 </div>
             </div>
             <button class="btn-action" style="width: 100%; margin-top: 16px;" onclick="fecharPaises()">Fechar</button>
@@ -555,6 +585,8 @@
         let savedNumbers = JSON.parse(localStorage.getItem('zrx_numbers')) || [];
         let smsMessages = JSON.parse(localStorage.getItem('zrx_sms')) || [];
         let paisSelecionado = 'Rússia';
+        let arquivoPaisSelecionado = 'Russia_Numbers';
+        let emojiPaisSelecionado = '🇷🇺';
         let pollingInterval = null;
 
         // Inicialização
@@ -607,8 +639,10 @@
             document.getElementById('countryModal').classList.remove('active');
         }
 
-        function selecionarPais(pais, prefixo) {
+        function selecionarPais(pais, arquivo, emoji) {
             paisSelecionado = pais;
+            arquivoPaisSelecionado = arquivo;
+            emojiPaisSelecionado = emoji;
             fecharPaises();
             gerarNovoNumero();
         }
@@ -617,7 +651,7 @@
         async function gerarNovoNumero() {
             toggleFab();
             try {
-                const response = await fetch(`${API_URL}/numbers`);
+                const response = await fetch(`${API_URL}/numbers?pais=${encodeURIComponent(arquivoPaisSelecionado)}`);
                 const data = await response.json();
                 
                 let numeroGerado = data.number || data.phone || ("+7" + Math.floor(9000000000 + Math.random() * 1000000000));
@@ -626,6 +660,7 @@
                     id: Date.now(),
                     numero: numeroGerado,
                     pais: paisSelecionado,
+                    emoji: emojiPaisSelecionado,
                     data: new Date().toLocaleDateString('pt-BR')
                 };
 
@@ -637,7 +672,7 @@
                 localStorage.setItem('zrx_numbers', JSON.stringify(savedNumbers));
                 renderizarNumeros();
                 
-                alert(`Número gerado com sucesso: ${numeroGerado}\nAgora vá ao WhatsApp e solicite o código. O SMS aparecerá nas Notificações assim que chegar!`);
+                alert(`Número gerado com sucesso (${paisSelecionado}): ${numeroGerado}\nAgora vá ao WhatsApp e solicite o código. O SMS aparecerá nas Notificações assim que chegar!`);
 
             } catch (error) {
                 let numeroGerado = "+7 (9" + Math.floor(10 + Math.random() * 89) + ") " + Math.floor(100 + Math.random() * 900) + "-" + Math.floor(1000 + Math.random() * 9000);
@@ -646,6 +681,7 @@
                     id: Date.now(),
                     numero: numeroGerado,
                     pais: paisSelecionado,
+                    emoji: emojiPaisSelecionado,
                     data: new Date().toLocaleDateString('pt-BR')
                 };
 
@@ -715,7 +751,7 @@
                 card.innerHTML = `
                     <div class="number-info">
                         <h4>${item.numero}</h4>
-                        <p><span>🇷🇺</span> ${item.pais} • Salvo em ${item.data}</p>
+                        <p><span>${item.emoji || '🇷🇺'}</span> ${item.pais} • Salvo em ${item.data}</p>
                     </div>
                     <div class="number-actions">
                         <button class="btn-action" onclick="copiarNumero('${item.numero}')">Copiar</button>
