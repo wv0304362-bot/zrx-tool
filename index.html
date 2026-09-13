@@ -534,45 +534,38 @@
         </button>
     </nav>
 
-    <!-- Modal de Seleção de Países -->
+    <!-- Modal de Seleção de Países (Atualizado com os arquivos reais do GitHub) -->
     <div class="modal" id="countryModal">
         <div class="modal-content">
             <h3 class="section-title" style="margin-bottom: 12px;">Países Disponíveis</h3>
-            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">Selecione o país para gerar o número:</p>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">Selecione o arquivo do país/pasta para sortear o número:</p>
             <div id="countryListContainer" style="display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto;">
-                <div class="country-item" onclick="selecionarPais('Rússia', 'Russia_Numbers', '🇷🇺')">
-                    <span style="font-size: 24px;">🇷🇺</span>
-                    <div>
-                        <strong>Rússia</strong>
-                        <div style="font-size: 12px; color: var(--text-muted);">Prefixo +7 (Ativo)</div>
-                    </div>
-                </div>
                 <div class="country-item" onclick="selecionarPais('Laos', 'Laos_Numbers_Random', '🇱🇦')">
                     <span style="font-size: 24px;">🇱🇦</span>
                     <div>
                         <strong>Laos</strong>
-                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: Laos_Numbers_Random</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: Laos_Numbers_Random.txt</div>
                     </div>
                 </div>
                 <div class="country-item" onclick="selecionarPais('Nigéria', 'Nigeria_Numbers (6)', '🇳🇬')">
                     <span style="font-size: 24px;">🇳🇬</span>
                     <div>
                         <strong>Nigéria</strong>
-                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: Nigeria_Numbers (6)</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: Nigeria_Numbers (6).txt</div>
                     </div>
                 </div>
                 <div class="country-item" onclick="selecionarPais('SMS Geral', 'SMSNumbers (86)', '🌐')">
                     <span style="font-size: 24px;">🌐</span>
                     <div>
                         <strong>SMS Geral</strong>
-                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: SMSNumbers (86)</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: SMSNumbers (86).txt</div>
                     </div>
                 </div>
                 <div class="country-item" onclick="selecionarPais('Sudão', 'Sudan_Numbers 2000', '🇸🇩')">
                     <span style="font-size: 24px;">🇸🇩</span>
                     <div>
                         <strong>Sudão</strong>
-                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: Sudan_Numbers 2000</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: Sudan_Numbers 2000.txt</div>
                     </div>
                 </div>
             </div>
@@ -584,9 +577,9 @@
         const API_URL = "https://weak-deloris-nothing672434-fe85179d.koyeb.app";
         let savedNumbers = JSON.parse(localStorage.getItem('zrx_numbers')) || [];
         let smsMessages = JSON.parse(localStorage.getItem('zrx_sms')) || [];
-        let paisSelecionado = 'Rússia';
-        let arquivoPaisSelecionado = 'Russia_Numbers';
-        let emojiPaisSelecionado = '🇷🇺';
+        let paisSelecionado = 'Laos';
+        let arquivoPaisSelecionado = 'Laos_Numbers_Random';
+        let emojiPaisSelecionado = '🇱🇦';
         let pollingInterval = null;
 
         // Inicialização
@@ -647,14 +640,17 @@
             gerarNovoNumero();
         }
 
-        // Gerar Número
+        // Gerar Número puxando direto da API vinculada aos arquivos do GitHub
         async function gerarNovoNumero() {
             toggleFab();
             try {
                 const response = await fetch(`${API_URL}/numbers?pais=${encodeURIComponent(arquivoPaisSelecionado)}`);
                 const data = await response.json();
                 
-                let numeroGerado = data.number || data.phone || ("+7" + Math.floor(9000000000 + Math.random() * 1000000000));
+                let numeroGerado = data.number || data.phone;
+                if (!numeroGerado) {
+                    throw new Error("Número não retornado pela API");
+                }
 
                 const novoItem = {
                     id: Date.now(),
@@ -672,25 +668,10 @@
                 localStorage.setItem('zrx_numbers', JSON.stringify(savedNumbers));
                 renderizarNumeros();
                 
-                alert(`Número gerado com sucesso (${paisSelecionado}): ${numeroGerado}\nAgora vá ao WhatsApp e solicite o código. O SMS aparecerá nas Notificações assim que chegar!`);
+                alert(`Número gerado com sucesso (${paisSelecionado}): ${numeroGerado}\nAgora vá ao aplicativo desejado e solicite o código. O SMS aparecerá nas Notificações assim que chegar!`);
 
             } catch (error) {
-                let numeroGerado = "+7 (9" + Math.floor(10 + Math.random() * 89) + ") " + Math.floor(100 + Math.random() * 900) + "-" + Math.floor(1000 + Math.random() * 9000);
-                
-                const novoItem = {
-                    id: Date.now(),
-                    numero: numeroGerado,
-                    pais: paisSelecionado,
-                    emoji: emojiPaisSelecionado,
-                    data: new Date().toLocaleDateString('pt-BR')
-                };
-
-                if (savedNumbers.length >= 10) savedNumbers.pop();
-                savedNumbers.unshift(novoItem);
-                localStorage.setItem('zrx_numbers', JSON.stringify(savedNumbers));
-                renderizarNumeros();
-                
-                alert(`Número gerado (Modo Offline): ${numeroGerado}`);
+                alert(`Erro ao puxar número do GitHub/API para ${paisSelecionado}. Verifique a conexão com o servidor.`);
             }
         }
 
@@ -751,7 +732,7 @@
                 card.innerHTML = `
                     <div class="number-info">
                         <h4>${item.numero}</h4>
-                        <p><span>${item.emoji || '🇷🇺'}</span> ${item.pais} • Salvo em ${item.data}</p>
+                        <p><span>${item.emoji || '🌐'}</span> ${item.pais} • Salvo em ${item.data}</p>
                     </div>
                     <div class="number-actions">
                         <button class="btn-action" onclick="copiarNumero('${item.numero}')">Copiar</button>
@@ -762,13 +743,13 @@
             });
         }
 
-        // Renderizar Notificações / SMS (Com botão de apagar)
+        // Renderizar Notificações / SMS
         function renderizarSms() {
             const container = document.getElementById('smsList');
             container.innerHTML = "";
 
             if (smsMessages.length === 0) {
-                container.innerHTML = `<div class="empty-state">Nenhuma mensagem recebida ainda.<br><small style="color:var(--text-muted);">O SMS só aparecerá aqui quando o WhatsApp solicitar o código para o número gerado.</small></div>`;
+                container.innerHTML = `<div class="empty-state">Nenhuma mensagem recebida ainda.<br><small style="color:var(--text-muted);">O SMS só aparecerá aqui quando o aplicativo solicitar o código para o número gerado.</small></div>`;
                 return;
             }
 
@@ -798,7 +779,7 @@
         // Ações Úteis
         function copiarNumero(num) {
             navigator.clipboard.writeText(num);
-            alert("Número copiado! Cole-o no WhatsApp para pedir o código.");
+            alert("Número copiado! Cole-o no aplicativo para pedir o código.");
         }
 
         function deletarNumero(id) {
@@ -807,7 +788,6 @@
             renderizarNumeros();
         }
 
-        // Função para apagar um SMS específico da lista
         function deletarSms(id) {
             smsMessages = smsMessages.filter(msg => msg.id !== id);
             localStorage.setItem('zrx_sms', JSON.stringify(smsMessages));
