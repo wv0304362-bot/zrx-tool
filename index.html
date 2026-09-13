@@ -561,18 +561,18 @@
                         <div style="font-size: 12px; color: var(--text-muted);">Arquivo: Nigeria_Numbers (6)</div>
                     </div>
                 </div>
-                <div class="country-item" onclick="selecionarPais('SMS Geral', 'SMSNumbers (86)', '🌐', '+1')">
-                    <span style="font-size: 24px;">🌐</span>
-                    <div>
-                        <strong>SMS Geral</strong>
-                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: SMSNumbers (86)</div>
-                    </div>
-                </div>
                 <div class="country-item" onclick="selecionarPais('Sudão', 'Sudan_Numbers 2000', '🇸🇩', '+249')">
                     <span style="font-size: 24px;">🇸🇩</span>
                     <div>
                         <strong>Sudão</strong>
                         <div style="font-size: 12px; color: var(--text-muted);">Arquivo: Sudan_Numbers 2000</div>
+                    </div>
+                </div>
+                <div class="country-item" onclick="selecionarPais('SMS Geral', 'SMSNumbers (86)', '🌐', '+1')">
+                    <span style="font-size: 24px;">🌐</span>
+                    <div>
+                        <strong>SMS Geral</strong>
+                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: SMSNumbers (86)</div>
                     </div>
                 </div>
             </div>
@@ -655,7 +655,6 @@
             let numeroGerado = "";
 
             try {
-                // Tenta puxar direto da API do GitHub ou endpoint de lista se disponível, senão gera perfeitamente pelo formato correto da pasta
                 const response = await fetch(`${API_URL}/numbers?pais=${encodeURIComponent(arquivoPaisSelecionado)}`);
                 if (response.ok) {
                     const data = await response.json();
