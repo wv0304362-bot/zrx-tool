@@ -561,18 +561,25 @@
                         <div style="font-size: 12px; color: var(--text-muted);">Arquivo: Nigeria_Numbers (6)</div>
                     </div>
                 </div>
-                <div class="country-item" onclick="selecionarPais('SMS Geral', 'SMSNumbers (86)', '🌐', '+1')">
-                    <span style="font-size: 24px;">🌐</span>
+                <div class="country-item" onclick="selecionarPais('Síria', 'manage-sms-numbers-09-14 (4)', '🇸🇾', '+963')">
+                    <span style="font-size: 24px;">🇸🇾</span>
                     <div>
-                        <strong>SMS Geral</strong>
-                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: SMSNumbers (86)</div>
+                        <strong>Síria</strong>
+                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: manage-sms-numbers-09-14 (4)</div>
                     </div>
                 </div>
-                <div class="country-item" onclick="selecionarPais('Sudão', 'Sudan_Numbers 2000', '🇸🇩', '+249')">
+                <div class="country-item" onclick="selecionarPais('Nepal', 'SMSNumbers(9999)-2528', '🇳🇵', '+977')">
+                    <span style="font-size: 24px;">🇳🇵</span>
+                    <div>
+                        <strong>Nepal</strong>
+                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: SMSNumbers(9999)-2528</div>
+                    </div>
+                </div>
+                <div class="country-item" onclick="selecionarPais('Sudão', 'Sudan_Numbers (8)', '🇸🇩', '+249')">
                     <span style="font-size: 24px;">🇸🇩</span>
                     <div>
                         <strong>Sudão</strong>
-                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: Sudan_Numbers 2000</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: Sudan_Numbers (8)</div>
                     </div>
                 </div>
             </div>
@@ -674,6 +681,10 @@
                     numeroGerado = `+856 20 ${randomDigits(50000000, 99999999)}`;
                 } else if (arquivoPaisSelecionado.includes('Nigeria')) {
                     numeroGerado = `+234 80${randomDigits(10000000, 99999999)}`;
+                } else if (arquivoPaisSelecionado.includes('manage-sms-numbers')) {
+                    numeroGerado = `+963 9${randomDigits(1000000, 9999999)}`;
+                } else if (arquivoPaisSelecionado.includes('SMSNumbers(9999)')) {
+                    numeroGerado = `+977 98${randomDigits(1000000, 9999999)}`;
                 } else if (arquivoPaisSelecionado.includes('Sudan')) {
                     numeroGerado = `+249 9${randomDigits(10000000, 99999999)}`;
                 } else {
@@ -762,7 +773,7 @@
                     <div class="number-actions">
                         <button class="btn-action" onclick="copiarNumero('${item.numero}')">Copiar</button>
                         <button class="btn-action" style="background-color: #dc2626;" onclick="deletarNumero(${item.id})">Excluir</button>
-                    </div>
+                        </div>
                 `;
                 container.appendChild(card);
             });
