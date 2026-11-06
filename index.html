@@ -534,7 +534,7 @@
         </button>
     </nav>
 
-    <!-- Modal de Seleção de Países (Carregado Dinamicamente da API) -->
+    <!-- Modal de Seleção de Países (Sincronização Dinâmica sem Rússia) -->
     <div class="modal" id="countryModal">
         <div class="modal-content">
             <h3 class="section-title" style="margin-bottom: 12px;">Países Disponíveis</h3>
@@ -550,10 +550,10 @@
         const API_URL = "https://weak-deloris-nothing672434-fe85179d.koyeb.app";
         let savedNumbers = JSON.parse(localStorage.getItem('zrx_numbers')) || [];
         let smsMessages = JSON.parse(localStorage.getItem('zrx_sms')) || [];
-        let paisSelecionado = 'Rússia';
-        let arquivoPaisSelecionado = 'Russia_Numbers';
-        let emojiPaisSelecionado = '🇷🇺';
-        let prefixoPaisSelecionado = '+7';
+        let paisSelecionado = 'Malásia';
+        let arquivoPaisSelecionado = 'Malaysia_Numbers';
+        let emojiPaisSelecionado = '🇲🇾';
+        let prefixoPaisSelecionado = '+60';
         let pollingInterval = null;
 
         // Inicialização
@@ -597,16 +597,28 @@
             document.getElementById('fabContainer').classList.remove('active');
         }
 
-        // Modal de Países e Busca Dinâmica com os novos países sincronizados
+        // Busca Dinâmica de Países (Remove automaticamente os países excluídos do servidor e filtra a Rússia)
         async function carregarPaisesDinamicos() {
             const container = document.getElementById('countryListContainer');
             try {
-                const response = await fetch(`${API_URL}/countries`);
+                const response = await fetch(`${API_URL}/countries`, { cache: 'no-store' });
                 if (response.ok) {
                     const paises = await response.json();
-                    if (paises && paises.length > 0) {
+                    if (Array.isArray(paises)) {
+                        // Filtra a Rússia para não exibir no painel
+                        const paisesAtivos = paises.filter(p => 
+                            !p.nome.toLowerCase().includes('russia') && 
+                            !p.nome.toLowerCase().includes('rússia') && 
+                            !p.arquivo.toLowerCase().includes('russia')
+                        );
+
                         container.innerHTML = "";
-                        paises.forEach(p => {
+                        if (paisesAtivos.length === 0) {
+                            container.innerHTML = `<div class="empty-state">Nenhum país disponível no momento.</div>`;
+                            return;
+                        }
+
+                        paisesAtivos.forEach(p => {
                             const item = document.createElement('div');
                             item.className = 'country-item';
                             item.onclick = () => selecionarPais(p.nome, p.arquivo, p.emoji, p.prefixo);
@@ -623,12 +635,11 @@
                     }
                 }
             } catch (e) {
-                console.warn("API /countries offline, carregando lista completa atualizada.");
+                console.warn("API /countries não respondeu, usando lista dinâmica atualizada.");
             }
 
-            // Lista atualizada com Rússia + Laos + Nigéria + Síria + Nepal + Sudão + Malásia + Indonésia + Arábia Saudita
+            // Fallback sem Rússia (removida do painel conforme solicitado)
             const fallbackPaises = [
-                { nome: 'Rússia', arquivo: 'Russia_Numbers', emoji: '🇷🇺', prefixo: '+7' },
                 { nome: 'Malásia', arquivo: 'Malaysia_Numbers', emoji: '🇲🇾', prefixo: '+60' },
                 { nome: 'Indonésia', arquivo: 'Indonesia_Numbers', emoji: '🇮🇩', prefixo: '+62' },
                 { nome: 'Arábia Saudita', arquivo: 'Saudi_Arabia_Numbers', emoji: '🇸🇦', prefixo: '+966' },
@@ -674,19 +685,19 @@
             gerarNovoNumero();
         }
 
-        // Gerar Número Real
+        // Gerar Número Real Conectado à API
         async function gerarNovoNumero() {
             toggleFab();
             let numeroGerado = "";
 
             try {
-                const response = await fetch(`${API_URL}/numbers?pais=${encodeURIComponent(arquivoPaisSelecionado)}`);
+                const response = await fetch(`${API_URL}/numbers?pais=${encodeURIComponent(arquivoPaisSelecionado)}`, { cache: 'no-store' });
                 if (response.ok) {
                     const data = await response.json();
                     numeroGerado = data.number || data.phone || data.numero;
                 }
             } catch (error) {
-                console.warn("Erro ao buscar da API, usando gerador estruturado.");
+                console.warn("Erro ao buscar da API, gerando número no formato do país.");
             }
 
             if (!numeroGerado) {
@@ -697,8 +708,6 @@
                     numeroGerado = `+62 8${rand(10, 99)} ${rand(100, 999)} ${rand(1000, 9999)}`;
                 } else if (arquivoPaisSelecionado.includes('Saudi')) {
                     numeroGerado = `+966 5${rand(0, 9)} ${rand(100, 999)} ${rand(1000, 9999)}`;
-                } else if (arquivoPaisSelecionado.includes('Russia')) {
-                    numeroGerado = `+7 9${rand(10, 99)} ${rand(100, 999)} ${rand(10, 99)} ${rand(10, 99)}`;
                 } else if (arquivoPaisSelecionado.includes('Laos')) {
                     numeroGerado = `+856 20 ${rand(50000000, 99999999)}`;
                 } else if (arquivoPaisSelecionado.includes('Nigeria')) {
@@ -733,50 +742,70 @@
             alert(`Número gerado com sucesso (${paisSelecionado}):\n${numeroGerado}\n\nAgora copie, cole no WhatsApp e aguarde o SMS.`);
         }
 
-        // Verificação Instantânea de SMS a cada 2 Segundos
+        // Captura Instantânea de SMS para Todos os Números Salvos
         function iniciarVerificacaoSms() {
             if (pollingInterval) clearInterval(pollingInterval);
             
             pollingInterval = setInterval(async () => {
                 if (savedNumbers.length === 0) return;
 
-                try {
-                    const numeroAtivo = savedNumbers[0].numero.replace(/\D/g, '');
-                    const response = await fetch(`${API_URL}/sms?phone=${numeroAtivo}`, {
-                        method: 'GET',
-                        headers: { 'Cache-Control': 'no-cache' }
-                    });
-
-                    if (!response.ok) return;
-                    
-                    const data = await response.json();
-                    const listaMensagens = data.messages || data.sms || (Array.isArray(data) ? data : []);
-                    
-                    if (listaMensagens.length > 0) {
-                        listaMensagens.forEach(msg => {
-                            const textoMsg = msg.text || msg.body || msg.mensagem || JSON.stringify(msg);
-                            const jaExiste = smsMessages.some(m => m.mensagem === textoMsg && m.numero === savedNumbers[0].numero);
-                            
-                            if (!jaExiste) {
-                                const novoSms = {
-                                    id: Date.now(),
-                                    numero: savedNumbers[0].numero,
-                                    mensagem: textoMsg,
-                                    tempo: "Agora mesmo"
-                                };
-                                smsMessages.unshift(novoSms);
-                                localStorage.setItem('zrx_sms', JSON.stringify(smsMessages));
-                                renderizarSms();
-                                
-                                if (navigator.vibrate) navigator.vibrate(300);
-                            }
+                // Varre os números salvos na lista para checar SMS ativos
+                for (const item of savedNumbers) {
+                    try {
+                        const numeroLimpo = item.numero.replace(/\D/g, '');
+                        const response = await fetch(`${API_URL}/sms?phone=${numeroLimpo}&number=${numeroLimpo}`, {
+                            method: 'GET',
+                            headers: { 'Accept': 'application/json' },
+                            cache: 'no-store'
                         });
+
+                        if (!response.ok) continue;
+                        
+                        const data = await response.json();
+                        let msgs = [];
+                        
+                        if (Array.isArray(data)) {
+                            msgs = data;
+                        } else if (data.messages && Array.isArray(data.messages)) {
+                            msgs = data.messages;
+                        } else if (data.sms && Array.isArray(data.sms)) {
+                            msgs = data.sms;
+                        } else if (data.data && Array.isArray(data.data)) {
+                            msgs = data.data;
+                        } else if (data.code || data.otp || data.message || data.text || data.body) {
+                            msgs = [data];
+                        }
+
+                        if (msgs.length > 0) {
+                            msgs.forEach(msg => {
+                                const textoMsg = typeof msg === 'string' ? msg : (msg.text || msg.body || msg.code || msg.otp || msg.message || msg.sms || JSON.stringify(msg));
+                                if (!textoMsg) return;
+
+                                const jaExiste = smsMessages.some(m => m.mensagem === textoMsg && m.numero === item.numero);
+                                
+                                if (!jaExiste) {
+                                    const novoSms = {
+                                        id: Date.now() + Math.random(),
+                                        numero: item.numero,
+                                        mensagem: textoMsg,
+                                        tempo: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                                    };
+                                    smsMessages.unshift(novoSms);
+                                    localStorage.setItem('zrx_sms', JSON.stringify(smsMessages));
+                                    renderizarSms();
+                                    
+                                    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                                }
+                            });
+                        }
+                    } catch (e) {
+                        // Ignora falhas pontuais de conexão
                     }
-                } catch (e) {}
+                }
             }, 2000);
         }
 
-        // Renderização da interface
+        // Renderização da Interface
         function renderizarNumeros(filtro = "") {
             const container = document.getElementById('numberList');
             container.innerHTML = "";
