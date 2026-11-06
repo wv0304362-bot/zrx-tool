@@ -534,54 +534,13 @@
         </button>
     </nav>
 
-    <!-- Modal de Seleção de Países -->
+    <!-- Modal de Seleção de Países (Carregado Dinamicamente da API) -->
     <div class="modal" id="countryModal">
         <div class="modal-content">
             <h3 class="section-title" style="margin-bottom: 12px;">Países Disponíveis</h3>
             <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">Selecione o país para gerar o número real:</p>
             <div id="countryListContainer" style="display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto;">
-                <div class="country-item" onclick="selecionarPais('Rússia', 'Russia_Numbers', '🇷🇺', '+7')">
-                    <span style="font-size: 24px;">🇷🇺</span>
-                    <div>
-                        <strong>Rússia</strong>
-                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: Russia_Numbers</div>
-                    </div>
-                </div>
-                <div class="country-item" onclick="selecionarPais('Laos', 'Laos_Numbers_Random', '🇱🇦', '+856')">
-                    <span style="font-size: 24px;">🇱🇦</span>
-                    <div>
-                        <strong>Laos</strong>
-                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: Laos_Numbers_Random</div>
-                    </div>
-                </div>
-                <div class="country-item" onclick="selecionarPais('Nigéria', 'Nigeria_Numbers (6)', '🇳🇬', '+234')">
-                    <span style="font-size: 24px;">🇳🇬</span>
-                    <div>
-                        <strong>Nigéria</strong>
-                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: Nigeria_Numbers (6)</div>
-                    </div>
-                </div>
-                <div class="country-item" onclick="selecionarPais('Síria', 'manage-sms-numbers-09-14 (4)', '🇸🇾', '+963')">
-                    <span style="font-size: 24px;">🇸🇾</span>
-                    <div>
-                        <strong>Síria</strong>
-                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: manage-sms-numbers-09-14 (4)</div>
-                    </div>
-                </div>
-                <div class="country-item" onclick="selecionarPais('Nepal', 'SMSNumbers(9999)-2528', '🇳🇵', '+977')">
-                    <span style="font-size: 24px;">🇳🇵</span>
-                    <div>
-                        <strong>Nepal</strong>
-                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: SMSNumbers(9999)-2528</div>
-                    </div>
-                </div>
-                <div class="country-item" onclick="selecionarPais('Sudão', 'Sudan_Numbers (8)', '🇸🇩', '+249')">
-                    <span style="font-size: 24px;">🇸🇩</span>
-                    <div>
-                        <strong>Sudão</strong>
-                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: Sudan_Numbers (8)</div>
-                    </div>
-                </div>
+                <div class="empty-state">Carregando países do servidor...</div>
             </div>
             <button class="btn-action" style="width: 100%; margin-top: 16px;" onclick="fecharPaises()">Fechar</button>
         </div>
@@ -604,6 +563,7 @@
             renderizarNumeros();
             renderizarSms();
             iniciarVerificacaoSms();
+            carregarPaisesDinamicos(); // Atualiza a lista de países automaticamente ao abrir
         });
 
         // Alternar Tema
@@ -637,9 +597,72 @@
             document.getElementById('fabContainer').classList.remove('active');
         }
 
-        // Modal de Países
+        // Modal de Países e Busca Dinâmica de Arquivos/Países
+        async function carregarPaisesDinamicos() {
+            const container = document.getElementById('countryListContainer');
+            try {
+                const response = await fetch(`${API_URL}/countries`);
+                if (response.ok) {
+                    const paises = await response.json();
+                    if (paises && paises.length > 0) {
+                        container.innerHTML = "";
+                        paises.forEach(p => {
+                            const item = document.createElement('div');
+                            item.className = 'country-item';
+                            item.onclick = () => selecionarPais(p.nome, p.arquivo, p.emoji, p.prefixo);
+                            item.innerHTML = `
+                                <span style="font-size: 24px;">${p.emoji || '🌐'}</span>
+                                <div>
+                                    <strong>${p.nome}</strong>
+                                    <div style="font-size: 12px; color: var(--text-muted);">Arquivo: ${p.arquivo}</div>
+                                </div>
+                            `;
+                            container.appendChild(item);
+                            
+                            // Define o primeiro como padrão se ainda não houver seleção
+                            if (!arquivoPaisSelecionado && paises.indexOf(p) === 0) {
+                                paisSelecionado = p.nome;
+                                arquivoPaisSelecionado = p.arquivo;
+                                emojiPaisSelecionado = p.emoji;
+                                prefixoPaisSelecionado = p.prefixo;
+                            }
+                        });
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.warn("API /countries não respondeu, usando fallback local inteligente de arquivos.");
+            }
+
+            // Fallback padrão com os arquivos reais que você adicionou (Rússia, Laos, Nigéria, Síria, Nepal, Sudão)
+            const fallbackPaises = [
+                { nome: 'Rússia', arquivo: 'Russia_Numbers', emoji: '🇷🇺', prefixo: '+7' },
+                { nome: 'Laos', arquivo: 'Laos_Numbers_Random', emoji: '🇱🇦', prefixo: '+856' },
+                { nome: 'Nigéria', arquivo: 'Nigeria_Numbers (6)', emoji: '🇳🇬', prefixo: '+234' },
+                { nome: 'Síria', arquivo: 'manage-sms-numbers-09-14 (4)', emoji: '🇸🇾', prefixo: '+963' },
+                { nome: 'Nepal', arquivo: 'SMSNumbers(9999)-2528', emoji: '🇳🇵', prefixo: '+977' },
+                { nome: 'Sudão', arquivo: 'Sudan_Numbers (8)', emoji: '🇸🇩', prefixo: '+249' }
+            ];
+
+            container.innerHTML = "";
+            fallbackPaises.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'country-item';
+                item.onclick = () => selecionarPais(p.nome, p.arquivo, p.emoji, p.prefixo);
+                item.innerHTML = `
+                    <span style="font-size: 24px;">${p.emoji}</span>
+                    <div>
+                        <strong>${p.nome}</strong>
+                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: ${p.arquivo}</div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
         function abrirPaises() {
             toggleFab();
+            carregarPaisesDinamicos(); // Atualiza em tempo real caso um arquivo tenha sido adicionado ou apagado
             document.getElementById('countryModal').classList.add('active');
         }
 
@@ -671,7 +694,7 @@
                 console.warn("Erro ao buscar da API, usando gerador estruturado do país.");
             }
 
-            // Fallback estruturado de alta fidelidade para os números reais de cada banco
+            // Fallback estruturado caso o arquivo específico venha vazio
             if (!numeroGerado) {
                 const rand = (min, max) => Math.floor(min + Math.random() * (max - min));
                 if (arquivoPaisSelecionado.includes('Russia')) {
@@ -710,7 +733,7 @@
             alert(`Número gerado com sucesso (${paisSelecionado}):\n${numeroGerado}\n\nAgora copie, cole no WhatsApp e aguarde o SMS.`);
         }
 
-        // Verificação Instantânea de SMS a cada 2 Segundos
+        // Verificação Instantânea de SMS a cada 2 Segundos (API Koyeb)
         function iniciarVerificacaoSms() {
             if (pollingInterval) clearInterval(pollingInterval);
             
@@ -841,4 +864,3 @@
     </script>
 </body>
 </html>
-
