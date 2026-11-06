@@ -563,7 +563,7 @@
             renderizarNumeros();
             renderizarSms();
             iniciarVerificacaoSms();
-            carregarPaisesDinamicos(); // Atualiza a lista de países automaticamente ao abrir
+            carregarPaisesDinamicos();
         });
 
         // Alternar Tema
@@ -597,7 +597,7 @@
             document.getElementById('fabContainer').classList.remove('active');
         }
 
-        // Modal de Países e Busca Dinâmica de Arquivos/Países
+        // Modal de Países e Busca Dinâmica com os novos países sincronizados
         async function carregarPaisesDinamicos() {
             const container = document.getElementById('countryListContainer');
             try {
@@ -618,25 +618,20 @@
                                 </div>
                             `;
                             container.appendChild(item);
-                            
-                            // Define o primeiro como padrão se ainda não houver seleção
-                            if (!arquivoPaisSelecionado && paises.indexOf(p) === 0) {
-                                paisSelecionado = p.nome;
-                                arquivoPaisSelecionado = p.arquivo;
-                                emojiPaisSelecionado = p.emoji;
-                                prefixoPaisSelecionado = p.prefixo;
-                            }
                         });
                         return;
                     }
                 }
             } catch (e) {
-                console.warn("API /countries não respondeu, usando fallback local inteligente de arquivos.");
+                console.warn("API /countries offline, carregando lista completa atualizada.");
             }
 
-            // Fallback padrão com os arquivos reais que você adicionou (Rússia, Laos, Nigéria, Síria, Nepal, Sudão)
+            // Lista atualizada com Rússia + Laos + Nigéria + Síria + Nepal + Sudão + Malásia + Indonésia + Arábia Saudita
             const fallbackPaises = [
                 { nome: 'Rússia', arquivo: 'Russia_Numbers', emoji: '🇷🇺', prefixo: '+7' },
+                { nome: 'Malásia', arquivo: 'Malaysia_Numbers', emoji: '🇲🇾', prefixo: '+60' },
+                { nome: 'Indonésia', arquivo: 'Indonesia_Numbers', emoji: '🇮🇩', prefixo: '+62' },
+                { nome: 'Arábia Saudita', arquivo: 'Saudi_Arabia_Numbers', emoji: '🇸🇦', prefixo: '+966' },
                 { nome: 'Laos', arquivo: 'Laos_Numbers_Random', emoji: '🇱🇦', prefixo: '+856' },
                 { nome: 'Nigéria', arquivo: 'Nigeria_Numbers (6)', emoji: '🇳🇬', prefixo: '+234' },
                 { nome: 'Síria', arquivo: 'manage-sms-numbers-09-14 (4)', emoji: '🇸🇾', prefixo: '+963' },
@@ -662,7 +657,7 @@
 
         function abrirPaises() {
             toggleFab();
-            carregarPaisesDinamicos(); // Atualiza em tempo real caso um arquivo tenha sido adicionado ou apagado
+            carregarPaisesDinamicos();
             document.getElementById('countryModal').classList.add('active');
         }
 
@@ -679,7 +674,7 @@
             gerarNovoNumero();
         }
 
-        // Gerar Número Real (Conectado à API do Koyeb)
+        // Gerar Número Real
         async function gerarNovoNumero() {
             toggleFab();
             let numeroGerado = "";
@@ -691,13 +686,18 @@
                     numeroGerado = data.number || data.phone || data.numero;
                 }
             } catch (error) {
-                console.warn("Erro ao buscar da API, usando gerador estruturado do país.");
+                console.warn("Erro ao buscar da API, usando gerador estruturado.");
             }
 
-            // Fallback estruturado caso o arquivo específico venha vazio
             if (!numeroGerado) {
                 const rand = (min, max) => Math.floor(min + Math.random() * (max - min));
-                if (arquivoPaisSelecionado.includes('Russia')) {
+                if (arquivoPaisSelecionado.includes('Malaysia')) {
+                    numeroGerado = `+60 1${rand(1, 9)} ${rand(100, 999)} ${rand(1000, 9999)}`;
+                } else if (arquivoPaisSelecionado.includes('Indonesia')) {
+                    numeroGerado = `+62 8${rand(10, 99)} ${rand(100, 999)} ${rand(1000, 9999)}`;
+                } else if (arquivoPaisSelecionado.includes('Saudi')) {
+                    numeroGerado = `+966 5${rand(0, 9)} ${rand(100, 999)} ${rand(1000, 9999)}`;
+                } else if (arquivoPaisSelecionado.includes('Russia')) {
                     numeroGerado = `+7 9${rand(10, 99)} ${rand(100, 999)} ${rand(10, 99)} ${rand(10, 99)}`;
                 } else if (arquivoPaisSelecionado.includes('Laos')) {
                     numeroGerado = `+856 20 ${rand(50000000, 99999999)}`;
@@ -733,7 +733,7 @@
             alert(`Número gerado com sucesso (${paisSelecionado}):\n${numeroGerado}\n\nAgora copie, cole no WhatsApp e aguarde o SMS.`);
         }
 
-        // Verificação Instantânea de SMS a cada 2 Segundos (API Koyeb)
+        // Verificação Instantânea de SMS a cada 2 Segundos
         function iniciarVerificacaoSms() {
             if (pollingInterval) clearInterval(pollingInterval);
             
@@ -768,18 +768,15 @@
                                 localStorage.setItem('zrx_sms', JSON.stringify(smsMessages));
                                 renderizarSms();
                                 
-                                // Vibração leve para avisar que o SMS chegou
                                 if (navigator.vibrate) navigator.vibrate(300);
                             }
                         });
                     }
-                } catch (e) {
-                    // Ignora falhas temporárias de rede em background
-                }
-            }, 2000); // Exato: a cada 2 segundos checa o SMS
+                } catch (e) {}
+            }, 2000);
         }
 
-        // Renderizar Lista de Números
+        // Renderização da interface
         function renderizarNumeros(filtro = "") {
             const container = document.getElementById('numberList');
             container.innerHTML = "";
@@ -811,7 +808,6 @@
             });
         }
 
-        // Renderizar Notificações / SMS
         function renderizarSms() {
             const container = document.getElementById('smsList');
             container.innerHTML = "";
@@ -838,13 +834,11 @@
             });
         }
 
-        // Pesquisa Rápida
         function filtrarNumeros() {
             const termo = document.getElementById('searchInput').value;
             renderizarNumeros(termo);
         }
 
-        // Ações Úteis
         function copiarNumero(num) {
             navigator.clipboard.writeText(num);
             alert("Número copiado!");
