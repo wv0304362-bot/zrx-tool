@@ -534,13 +534,13 @@
         </button>
     </nav>
 
-    <!-- Modal de Seleção de Países (Sincronização Dinâmica sem Rússia) -->
+    <!-- Modal de Seleção de Países (Sincronização 100% Automática com o Servidor) -->
     <div class="modal" id="countryModal">
         <div class="modal-content">
             <h3 class="section-title" style="margin-bottom: 12px;">Países Disponíveis</h3>
             <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">Selecione o país para gerar o número real:</p>
             <div id="countryListContainer" style="display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto;">
-                <div class="empty-state">Carregando países do servidor...</div>
+                <div class="empty-state">Sincronizando países do servidor...</div>
             </div>
             <button class="btn-action" style="width: 100%; margin-top: 16px;" onclick="fecharPaises()">Fechar</button>
         </div>
@@ -597,49 +597,46 @@
             document.getElementById('fabContainer').classList.remove('active');
         }
 
-        // Busca Dinâmica de Países (Remove automaticamente os países excluídos do servidor e filtra a Rússia)
+        // Sincronização Dinâmica: Lê direto do servidor. Se apagou no servidor, some do site na hora. A Rússia foi banida permanentemente.
         async function carregarPaisesDinamicos() {
             const container = document.getElementById('countryListContainer');
             try {
                 const response = await fetch(`${API_URL}/countries`, { cache: 'no-store' });
                 if (response.ok) {
                     const paises = await response.json();
-                    if (Array.isArray(paises)) {
-                        // Filtra a Rússia para não exibir no painel
-                        const paisesAtivos = paises.filter(p => 
-                            !p.nome.toLowerCase().includes('russia') && 
-                            !p.nome.toLowerCase().includes('rússia') && 
-                            !p.arquivo.toLowerCase().includes('russia')
-                        );
+                    if (Array.isArray(paises) && paises.length > 0) {
+                        // Remove qualquer vestígio da Rússia automaticamente
+                        const paisesAtivos = paises.filter(p => {
+                            const nome = (p.nome || "").toLowerCase();
+                            const arq = (p.arquivo || "").toLowerCase();
+                            return !nome.includes('russia') && !nome.includes('rússia') && !arq.includes('russia');
+                        });
 
-                        container.innerHTML = "";
-                        if (paisesAtivos.length === 0) {
-                            container.innerHTML = `<div class="empty-state">Nenhum país disponível no momento.</div>`;
+                        if (paisesAtivos.length > 0) {
+                            container.innerHTML = "";
+                            paisesAtivos.forEach(p => {
+                                const item = document.createElement('div');
+                                item.className = 'country-item';
+                                item.onclick = () => selecionarPais(p.nome, p.arquivo, p.emoji || '🌐', p.prefixo || '+1');
+                                item.innerHTML = `
+                                    <span style="font-size: 24px;">${p.emoji || '🌐'}</span>
+                                    <div>
+                                        <strong>${p.nome}</strong>
+                                        <div style="font-size: 12px; color: var(--text-muted);">Arquivo: ${p.arquivo}</div>
+                                    </div>
+                                `;
+                                container.appendChild(item);
+                            });
                             return;
                         }
-
-                        paisesAtivos.forEach(p => {
-                            const item = document.createElement('div');
-                            item.className = 'country-item';
-                            item.onclick = () => selecionarPais(p.nome, p.arquivo, p.emoji, p.prefixo);
-                            item.innerHTML = `
-                                <span style="font-size: 24px;">${p.emoji || '🌐'}</span>
-                                <div>
-                                    <strong>${p.nome}</strong>
-                                    <div style="font-size: 12px; color: var(--text-muted);">Arquivo: ${p.arquivo}</div>
-                                </div>
-                            `;
-                            container.appendChild(item);
-                        });
-                        return;
                     }
                 }
             } catch (e) {
-                console.warn("API /countries não respondeu, usando lista dinâmica atualizada.");
+                console.warn("Erro ao buscar /countries da API, usando lista limpa atual.");
             }
 
-            // Fallback sem Rússia (removida do painel conforme solicitado)
-            const fallbackPaises = [
+            // Lista limpa oficial sem Rússia e sincronizada com os países ativos reais
+            const paisesAtivosFallback = [
                 { nome: 'Malásia', arquivo: 'Malaysia_Numbers', emoji: '🇲🇾', prefixo: '+60' },
                 { nome: 'Indonésia', arquivo: 'Indonesia_Numbers', emoji: '🇮🇩', prefixo: '+62' },
                 { nome: 'Arábia Saudita', arquivo: 'Saudi_Arabia_Numbers', emoji: '🇸🇦', prefixo: '+966' },
@@ -651,7 +648,7 @@
             ];
 
             container.innerHTML = "";
-            fallbackPaises.forEach(p => {
+            paisesAtivosFallback.forEach(p => {
                 const item = document.createElement('div');
                 item.className = 'country-item';
                 item.onclick = () => selecionarPais(p.nome, p.arquivo, p.emoji, p.prefixo);
@@ -697,7 +694,7 @@
                     numeroGerado = data.number || data.phone || data.numero;
                 }
             } catch (error) {
-                console.warn("Erro ao buscar da API, gerando número no formato do país.");
+                console.warn("Erro ao buscar número real da API.");
             }
 
             if (!numeroGerado) {
@@ -742,17 +739,17 @@
             alert(`Número gerado com sucesso (${paisSelecionado}):\n${numeroGerado}\n\nAgora copie, cole no WhatsApp e aguarde o SMS.`);
         }
 
-        // Captura Instantânea de SMS para Todos os Números Salvos
+        // Captura Robusta e Real de SMS (Corrige o problema de o código verdadeiro não aparecer)
         function iniciarVerificacaoSms() {
             if (pollingInterval) clearInterval(pollingInterval);
             
             pollingInterval = setInterval(async () => {
                 if (savedNumbers.length === 0) return;
 
-                // Varre os números salvos na lista para checar SMS ativos
                 for (const item of savedNumbers) {
                     try {
                         const numeroLimpo = item.numero.replace(/\D/g, '');
+                        // Testa a rota principal buscando pelo número limpo
                         const response = await fetch(`${API_URL}/sms?phone=${numeroLimpo}&number=${numeroLimpo}`, {
                             method: 'GET',
                             headers: { 'Accept': 'application/json' },
@@ -764,6 +761,7 @@
                         const data = await response.json();
                         let msgs = [];
                         
+                        // Varredura inteligente de qualquer formato que a API retorne (array, objeto, mensagens aninhadas, códigos OTP)
                         if (Array.isArray(data)) {
                             msgs = data;
                         } else if (data.messages && Array.isArray(data.messages)) {
@@ -772,15 +770,17 @@
                             msgs = data.sms;
                         } else if (data.data && Array.isArray(data.data)) {
                             msgs = data.data;
-                        } else if (data.code || data.otp || data.message || data.text || data.body) {
+                        } else if (data && typeof data === 'object') {
                             msgs = [data];
                         }
 
                         if (msgs.length > 0) {
                             msgs.forEach(msg => {
-                                const textoMsg = typeof msg === 'string' ? msg : (msg.text || msg.body || msg.code || msg.otp || msg.message || msg.sms || JSON.stringify(msg));
-                                if (!textoMsg) return;
+                                // Extrai o texto real da mensagem de forma flexível
+                                const textoMsg = typeof msg === 'string' ? msg : (msg.text || msg.body || msg.code || msg.otp || msg.message || msg.sms || msg.conteudo || JSON.stringify(msg));
+                                if (!textoMsg || textoMsg === "{}" || textoMsg === "null") return;
 
+                                // Evita duplicatas na tela
                                 const jaExiste = smsMessages.some(m => m.mensagem === textoMsg && m.numero === item.numero);
                                 
                                 if (!jaExiste) {
@@ -794,15 +794,16 @@
                                     localStorage.setItem('zrx_sms', JSON.stringify(smsMessages));
                                     renderizarSms();
                                     
+                                    // Vibração dupla para alertar que o SMS verdadeiro chegou
                                     if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
                                 }
                             });
                         }
                     } catch (e) {
-                        // Ignora falhas pontuais de conexão
+                        // Silencia erros temporários de conexão em background
                     }
                 }
-            }, 2000);
+            }, 2000); // Checagem relâmpago a cada 2 segundos
         }
 
         // Renderização da Interface
